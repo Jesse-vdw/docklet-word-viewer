@@ -1,0 +1,10 @@
+{
+  "id": "docklet-word-viewer",
+  "name": "Docklet Word Viewer",
+  "version": "1.0.0",
+  "minAppVersion": "1.7.0",
+  "description": "Open .docx Word documents in a local-first Obsidian viewer.",
+  "author": "BCT",
+  "authorUrl": "",
+  "isDesktopOnly": true
+}

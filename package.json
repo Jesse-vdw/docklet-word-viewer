@@ -1,0 +1,62 @@
+{
+  "name": "docklet-word-viewer",
+  "version": "1.0.0",
+  "description": "Docklet Word document viewer for Obsidian with local DOCX rendering.",
+  "packageManager": "pnpm@10.33.2",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "build": "rm -rf .vite-build && vite build && node ../scripts/copy-build-artifacts.mjs",
+    "dev": "vite build --watch --mode development",
+    "typecheck": "tsc --noEmit",
+    "typecheck:tests": "tsc --noEmit -p tsconfig.test.json",
+    "lint": "eslint src tests",
+    "lint:fix": "eslint src tests --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "pnpm typecheck && pnpm typecheck:tests && pnpm lint && pnpm test && pnpm check:test-gates",
+    "quality:check": "node scripts/check-quality.mjs && pnpm release:check",
+    "check:artifacts": "node ../scripts/check-release-artifacts.mjs",
+    "check:no-data-json": "node ../scripts/check-no-data-json-tracked.mjs",
+    "check:release-metadata": "node ../scripts/check-release-metadata.mjs",
+    "check:release-package": "node ../scripts/check-release-package.mjs",
+    "release:check": "pnpm check:oop && node ../scripts/run-package-release-check.mjs",
+    "release:dry-run": "node ../scripts/release-dry-run.mjs",
+    "test:coverage": "vitest run --coverage --coverage.thresholds.lines=40 --coverage.thresholds.functions=40 --coverage.thresholds.branches=35 --coverage.thresholds.statements=40",
+    "check:test-gates": "node scripts/check-test-gates.mjs",
+    "check:oop": "node ../scripts/check-oop-architecture.mjs",
+    "test:a11y": "vitest run --passWithNoTests tests/a11y.test.ts tests/a11y.test.tsx",
+    "check:ux-contracts": "node ../scripts/ux/check-ux-contracts.mjs",
+    "check:ux-css": "node ../scripts/ux/check-css-prefix-and-tokens.mjs",
+    "check:architecture": "node scripts/check-architecture.mjs",
+    "check:quality": "node scripts/check-quality.mjs",
+    "check:bundle-size": "node scripts/check-bundle-size.mjs",
+    "analyze:bundle": "node scripts/analyze-bundle.mjs",
+    "check:dead-code": "node scripts/check-dead-code.mjs",
+    "check:no-new-loose-casts": "node scripts/check-no-new-loose-casts.mjs",
+    "check:quality-scorecard": "node scripts/check-quality-scorecard.mjs",
+    "clean:release": "node scripts/clean-release.mjs",
+    "verify:release": "node scripts/verify-release.mjs",
+    "package:release": "node scripts/package-release.mjs"
+  },
+  "peerDependencies": {
+    "obsidian": "*"
+  },
+  "dependencies": {
+    "docklet-core": "workspace:*",
+    "fflate": "^0.8.2"
+  },
+  "devDependencies": {
+    "@preact/signals-core": "^1.14.1",
+    "vite": "^8.0.10",
+    "vitest": "^4.1.5"
+  },
+  "private": true,
+  "files": [
+    "manifest.json",
+    "main.js",
+    "styles.css",
+    "versions.json",
+    "resources"
+  ]
+}

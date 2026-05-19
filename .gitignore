@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build/temp output
+.vite-build/
+dist/
+*.tsbuildinfo
+
+# Test/cache output
+coverage/
+.vitest/
+.eslintcache
+.nyc_output/
+
+# Vault-local plugin runtime data
+data.json
+spelling-cache.json
+
+# Package-manager drift
+package-lock.json
+npm-shrinkwrap.json
+yarn.lock
+bun.lock
+bun.lockb
+
+# OS/local files
+.DS_Store
+**/.DS_Store
+*.log
+pnpm-debug.log*
+.turbo/

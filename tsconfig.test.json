@@ -1,0 +1,16 @@
+{
+  "extends": [
+    "./tsconfig.json",
+    "../tsconfig.test.shared.json"
+  ],
+  "include": [
+    "src/**/*.d.ts",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "vitest.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

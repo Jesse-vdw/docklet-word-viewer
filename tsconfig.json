@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.plugin-docklet-core.json",
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests"
+  ]
+}
