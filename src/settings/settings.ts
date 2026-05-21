@@ -30,19 +30,19 @@ export function normalizeWordViewerSettings(raw: Partial<WordViewerSettings> | n
 	};
 }
 
-function boolOrDefault(value: unknown, fallback: boolean): boolean {
-	return typeof value === 'boolean' ? value : fallback;
+function boolOrDefault(value: unknown, default_path: boolean): boolean {
+	return typeof value === 'boolean' ? value : default_path;
 }
 
-function stringOrDefault(value: unknown, fallback: string): string {
-	return typeof value === 'string' ? value.trim() : fallback;
+function stringOrDefault(value: unknown, default_path: string): string {
+	return typeof value === 'string' ? value.trim() : default_path;
 }
 
-function layoutOrDefault(value: unknown, fallback: WordLayoutMode): WordLayoutMode {
-	return value === 'paginated' || value === 'continuous' ? value : fallback;
+function layoutOrDefault(value: unknown, default_path: WordLayoutMode): WordLayoutMode {
+	return value === 'paginated' || value === 'continuous' ? value : default_path;
 }
 
-function numberInRangeOrDefault(value: unknown, min: number, max: number, fallback: number): number {
-	if (typeof value !== 'number' || !Number.isFinite(value)) { return fallback; }
+function numberInRangeOrDefault(value: unknown, min: number, max: number, default_path: number): number {
+	if (typeof value !== 'number' || !Number.isFinite(value)) { return default_path; }
 	return Math.min(max, Math.max(min, Math.round(value)));
 }

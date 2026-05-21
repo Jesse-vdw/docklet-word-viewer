@@ -39,7 +39,7 @@ export function renderSettingsSection(containerEl: HTMLElement, host: WordViewer
 		if (Number.isFinite(parsed)) { host.patchSettings({ maxFileSizeMb: parsed }); }
 	});
 	toggleSetting(containerEl, 'Allow remote conversion', 'Reserved for a self-hosted Syncfusion-compatible conversion service. Leave off to keep documents local.', settings.allowRemoteConversion, (value) => patch(host, { allowRemoteConversion: value }, refresh));
-	toggleSetting(containerEl, 'Prefer remote conversion', 'When enabled, use the configured self-hosted converter before the local parser. Otherwise it is only used as a fallback.', settings.preferRemoteConversion, (value) => patch(host, { preferRemoteConversion: value }, refresh));
+	toggleSetting(containerEl, 'Prefer remote conversion', 'When enabled, use the configured self-hosted converter before the local parser. Otherwise it is only used as a default_path.', settings.preferRemoteConversion, (value) => patch(host, { preferRemoteConversion: value }, refresh));
 	textSetting(containerEl, 'Syncfusion service URL', 'Optional self-hosted endpoint such as http://localhost:62869/api/documenteditor/. The public demo service should not be used for private vault files.', 'http://localhost:62869/api/documenteditor/', settings.syncfusionServiceUrl, (value) => host.patchSettings({ syncfusionServiceUrl: value }));
 	textSetting(containerEl, 'Remote conversion timeout', 'Abort self-hosted conversion requests after this many milliseconds.', '15000', String(settings.remoteConversionTimeoutMs), (value) => {
 		const parsed = Number(value);

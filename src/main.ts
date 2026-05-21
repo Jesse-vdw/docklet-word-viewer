@@ -32,7 +32,7 @@ export default class DockletWordViewerPlugin extends Plugin implements WordViewe
 	get settingsSignal(): Signal<WordViewerSettings> { return this.store.settingsSignal; }
 	patchSettings(patch: Partial<WordViewerSettings>): void { this.store.patchSettings(patch); }
 
-	async onload(): Promise<void> {
+	override async onload(): Promise<void> {
 		this.repository = new WordFileRepository(this.app);
 		this.parser = new DocxParser();
 		this.sfdtParser = new SfdtParser();
@@ -47,7 +47,7 @@ export default class DockletWordViewerPlugin extends Plugin implements WordViewe
 		this.addSettingTab(new DockletWordViewerSettingTab(this.app, this));
 	}
 
-	onunload(): void { this.app.workspace.detachLeavesOfType(C.WORD_VIEW_TYPE); }
+	override onunload(): void { this.app.workspace.detachLeavesOfType(C.WORD_VIEW_TYPE); }
 
 	private async loadSettings(): Promise<void> {
 		const raw = await this.loadData() as Partial<WordViewerSettings> | null | undefined;

@@ -35,15 +35,15 @@ export class WordViewerView extends ItemView {
 		this.layout = settingsSignal.value.defaultLayout;
 	}
 
-	getViewType(): string { return C.WORD_VIEW_TYPE; }
-	getDisplayText(): string { return this.currentFile ? this.currentFile.basename : C.PLUGIN_NAME; }
-	getIcon(): string { return C.ICON_WORD_VIEWER; }
+	override getViewType(): string { return C.WORD_VIEW_TYPE; }
+	override getDisplayText(): string { return this.currentFile ? this.currentFile.basename : C.PLUGIN_NAME; }
+	override getIcon(): string { return C.ICON_WORD_VIEWER; }
 	getDocumentPath(): string | null { return this.currentFile?.path ?? null; }
-	async onClose(): Promise<void> { this.destroyBridge(); }
+	override async onClose(): Promise<void> { this.destroyBridge(); }
 	async reloadDocument(): Promise<void> { await this.loadCurrentDocument(); }
 	updateTheme(isDark: boolean): void { this.bridge.setTheme(isDark); }
 
-	async onOpen(): Promise<void> {
+	override async onOpen(): Promise<void> {
 		this.buildDom();
 		if (this.currentFile) {
 			await this.loadCurrentDocument();
@@ -52,7 +52,7 @@ export class WordViewerView extends ItemView {
 		}
 	}
 
-	async setState(state: Record<string, unknown>, result: { history: boolean }): Promise<void> {
+	override async setState(state: Record<string, unknown>, result: { history: boolean }): Promise<void> {
 		await super.setState(state, result);
 		const path = state['file'];
 		if (typeof path !== 'string') {
@@ -70,7 +70,7 @@ export class WordViewerView extends ItemView {
 		await this.loadCurrentDocument();
 	}
 
-	getState(): Record<string, unknown> {
+	override getState(): Record<string, unknown> {
 		const base = super.getState();
 		return this.currentFile ? { ...base, file: this.currentFile.path } : base;
 	}
@@ -120,6 +120,7 @@ export class WordViewerView extends ItemView {
 
 	private buildDom(): void {
 		const container = this.containerEl.children[1];
+		if (!(container instanceof HTMLElement)) { return; }
 		container.empty();
 		container.addClass(C.CSS_ROOT);
 		const toolbar = container.createDiv({ cls: C.CSS_TOOLBAR });
@@ -221,7 +222,7 @@ export class WordViewerView extends ItemView {
 		for (const item of model.outline) {
 			const button = list.createEl('button', { cls: C.CSS_OUTLINE_BUTTON, text: item.title });
 			button.type = 'button';
-			button.dataset.level = String(item.level);
+			button.dataset['level'] = String(item.level);
 			button.addEventListener('click', () => this.bridge.scrollToBlock(item.id));
 		}
 	}

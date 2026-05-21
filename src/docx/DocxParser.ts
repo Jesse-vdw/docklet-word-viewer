@@ -184,8 +184,8 @@ export class DocxParser {
 		counters.length = level + 1;
 		this.listCounters.set(numId, counters);
 		const format = definition?.format ?? 'decimal';
-		const fallback = format === 'bullet' ? (definition?.text ?? '•') : `${formatCounter(counters[level] ?? start, format)}.`;
-		return (definition?.text ?? fallback).replace(/%([1-9])/g, (_match, index: string) => formatCounter(counters[Number(index) - 1] ?? start, format));
+		const default_path = format === 'bullet' ? (definition?.text ?? '•') : `${formatCounter(counters[level] ?? start, format)}.`;
+		return (definition?.text ?? default_path).replace(/%([1-9])/g, (_match, index: string) => formatCounter(counters[Number(index) - 1] ?? start, format));
 	}
 
 	private parseInlineContainer(element: Element, docx: ParsedPackage, stats: WordDocumentStats): WordInline[] {
@@ -292,11 +292,15 @@ export class DocxParser {
 		return Object.keys(docx.files)
 			.filter((path) => path.startsWith(prefix) && path.endsWith('.xml'))
 			.sort()
-			.map((path): WordHeaderFooter => ({
-				id: this.makeId(kind),
-				kind,
-				blocks: this.parseBlocks(parseXml(decodeUtf8(docx.files[path]), path).documentElement, docx, stats),
-			}));
+			.flatMap((path): WordHeaderFooter[] => {
+				const bytes = docx.files[path];
+				if (!bytes) { return []; }
+				return [{
+					id: this.makeId(kind),
+					kind,
+					blocks: this.parseBlocks(parseXml(decodeUtf8(bytes), path).documentElement, docx, stats),
+				}];
+			});
 	}
 
 	private parseNotes(bytes: Uint8Array | undefined, localName: 'footnote' | 'endnote'): Map<string, WordDocumentNote> {
