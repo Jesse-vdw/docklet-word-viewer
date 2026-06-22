@@ -291,6 +291,7 @@ function renderTable(block) {
 			if (cell.colSpan > 1) td.colSpan = cell.colSpan;
 			if (cell.rowSpan > 1) td.rowSpan = cell.rowSpan;
 			if (cell.shading) td.style.backgroundColor = cell.shading;
+			if (cell.widthPt) td.style.width = cell.widthPt + 'pt';
 			appendBlocks(td, cell.blocks);
 			tr.appendChild(td);
 		}

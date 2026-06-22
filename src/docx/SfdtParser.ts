@@ -85,7 +85,7 @@ export class SfdtParser {
 			type: 'table',
 			id: this.makeId('sfdt-table'),
 			rows: asArray(block['rows']).map((row) => ({
-				cells: isRecord(row) ? asArray(row['cells']).map((cell) => ({ colSpan: 1, rowSpan: 1, shading: null, blocks: isRecord(cell) ? this.parseBlocks(asArray(cell['blocks'])) : [] })) : [],
+				cells: isRecord(row) ? asArray(row['cells']).map((cell) => ({ colSpan: 1, rowSpan: 1, shading: null, widthPt: null, blocks: isRecord(cell) ? this.parseBlocks(asArray(cell['blocks'])) : [] })) : [],
 			})),
 		};
 	}

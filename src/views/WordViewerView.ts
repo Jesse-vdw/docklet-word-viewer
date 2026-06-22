@@ -9,6 +9,7 @@ import type { WordViewerSettings } from '../settings/settings.ts';
 import { WordDocumentLoader } from './WordDocumentLoader.ts';
 
 interface ToolbarAction { icon: string; label: string; onClick(): void; }
+interface StateAction { label: string; onClick(): void; }
 
 export class WordViewerView extends ItemView {
 	private currentFile: TFile | null = null;
@@ -54,6 +55,9 @@ export class WordViewerView extends ItemView {
 
 	override async setState(state: Record<string, unknown>, result: { history: boolean }): Promise<void> {
 		await super.setState(state, result);
+		this.layout = normalizeLayoutState(state[C.VIEW_STATE_LAYOUT], this.settingsSignal.value.defaultLayout);
+		this.zoom = normalizeZoomState(state[C.VIEW_STATE_ZOOM]);
+		this.updateLayoutButton();
 		const path = state['file'];
 		if (typeof path !== 'string') {
 			this.currentFile = null;
@@ -72,7 +76,12 @@ export class WordViewerView extends ItemView {
 
 	override getState(): Record<string, unknown> {
 		const base = super.getState();
-		return this.currentFile ? { ...base, file: this.currentFile.path } : base;
+		return {
+			...base,
+			...(this.currentFile ? { file: this.currentFile.path } : {}),
+			[C.VIEW_STATE_LAYOUT]: this.layout,
+			[C.VIEW_STATE_ZOOM]: this.zoom,
+		};
 	}
 
 	refreshSettings(): void {
@@ -194,7 +203,6 @@ export class WordViewerView extends ItemView {
 	private layoutButtonLabel(): string { return this.layout === 'paginated' ? 'Switch to continuous layout' : 'Switch to paginated layout'; }
 
 	private showDocumentStatus(model: WordDocumentModel): void {
-		this.clearState();
 		this.statusEl?.setText(`${model.stats.paragraphs} paragraphs · ${model.stats.tables} tables · ${model.stats.images} images · ${model.stats.links} links · ${Math.round(this.zoom * 100)}%`);
 		if (this.warningEl) {
 			const warnings = [...model.warnings, ...model.unsupportedFeatures.map((feature) => `Unsupported: ${feature}.`)];
@@ -267,9 +275,15 @@ export class WordViewerView extends ItemView {
 
 	private showEmpty(): void { this.destroyBridge(); this.showState('No Word document open', 'Open a .docx file from the file explorer or command palette.'); }
 	private showLoading(): void { this.showState('Loading Word document', 'Reading and rendering local DOCX content.'); }
-	private showError(message: string, retry: () => void): void { this.destroyBridge(); this.showState('Could not render Word document', message, retry); }
+	private showError(message: string, retry: () => void): void {
+		this.destroyBridge();
+		const actions: StateAction[] = [{ label: 'Try again', onClick: retry }];
+		if (this.model) { actions.push({ label: 'Copy document text', onClick: () => { void this.copyDocumentText(); } }); }
+		if (this.currentFile) { actions.push({ label: 'Open in default app', onClick: () => { void this.openExternally(); } }); }
+		this.showState('Could not render Word document', message, actions);
+	}
 
-	private showState(title: string, message: string, retry?: () => void): void {
+	private showState(title: string, message: string, actions: StateAction[] = []): void {
 		this.statusEl?.setText('');
 		this.warningEl?.hide();
 		this.outlineEl?.empty();
@@ -278,10 +292,11 @@ export class WordViewerView extends ItemView {
 		const state = this.iframeHostEl.createDiv({ cls: C.CSS_STATE });
 		state.createDiv({ cls: C.CSS_STATE_TITLE, text: title });
 		state.createDiv({ cls: C.CSS_STATE_MSG, text: message });
-		if (retry) { state.createEl('button', { cls: C.CSS_STATE_BUTTON, text: 'Try again' }).addEventListener('click', retry); }
+		for (const action of actions) {
+			state.createEl('button', { cls: C.CSS_STATE_BUTTON, text: action.label }).addEventListener('click', action.onClick);
+		}
 	}
 
-	private clearState(): void { if (this.iframeHostEl) { this.iframeHostEl.empty(); } }
 	private destroyBridge(): void { this.bridge.destroy(); }
 }
 
@@ -290,4 +305,13 @@ function setToolbarButtonIcon(button: HTMLButtonElement, icon: string, label: st
 	setIcon(button, icon);
 	button.setAttribute('aria-label', label);
 	button.setAttribute('title', label);
+}
+
+function normalizeLayoutState(value: unknown, fallback: WordLayoutMode): WordLayoutMode {
+	return value === 'continuous' || value === 'paginated' ? value : fallback;
+}
+
+function normalizeZoomState(value: unknown): number {
+	if (typeof value !== 'number' || !Number.isFinite(value)) { return C.DEFAULT_ZOOM; }
+	return Math.round(Math.min(C.MAX_ZOOM, Math.max(C.MIN_ZOOM, value)) * 100) / 100;
 }

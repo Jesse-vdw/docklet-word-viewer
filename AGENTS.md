@@ -42,16 +42,7 @@ Docklet Word Viewer opens `.docx` files in Obsidian through a local-first OOXML 
 ## Commands
 
 ```bash
-pnpm --filter docklet-word-viewer build
-pnpm --filter docklet-word-viewer dev
-pnpm --filter docklet-word-viewer typecheck
-pnpm --filter docklet-word-viewer typecheck:tests
-pnpm --filter docklet-word-viewer lint
-pnpm --filter docklet-word-viewer lint:fix
-pnpm --filter docklet-word-viewer test
-pnpm --filter docklet-word-viewer test:watch
-pnpm --filter docklet-word-viewer release:check
-pnpm --filter docklet-word-viewer release:dry-run
+pnpm --filter docklet-word-viewer check
 ```
 
 ---
@@ -63,7 +54,7 @@ pnpm --filter docklet-word-viewer release:dry-run
   - `main.js`
   - `styles.css`
 - Do not commit or ship vault-local `data.json`.
-Use `release:check` as the package production gate.
+Use `check` as the package production gate.
 
 ---
 
@@ -83,8 +74,8 @@ Every plugin AGENTS.md MUST include these sections:
 - Required test boundary isolation file: `tests/__mocks__/obsidian.ts`.
 - If the package exposes a public API (`getApi`/`api`), it MUST include API/contract tests.
 - If the package owns runtime lifecycle under `src/runtime`, it MUST include runtime ownership tests.
-- Required package test gate command: `pnpm --filter <plugin> check:test-gates`.
-- Required suite validation command: `pnpm -C plugins check:tdd`.
+- Package `check` runs the workspace-level test gates.
+- Required suite validation command: `pnpm -C plugins check`.
 
 ## Workspace Vision Alignment
 

@@ -12,7 +12,7 @@ describe("accessibility workflow", () => {
     </main>`;
 
     const result = await axe.run(document.body, {
-      runOnly: { type: "tag", values: ["wcag2a", "wcag2aa"] },
+      runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"] },
     });
 
     const critical = result.violations.filter((v) => v.impact === "critical");

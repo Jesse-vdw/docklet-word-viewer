@@ -20,7 +20,7 @@ describe('DocxParser', () => {
 						</w:p>
 						<w:tbl>
 							<w:tr>
-								<w:tc><w:p><w:r><w:t>Cell A</w:t></w:r></w:p></w:tc>
+								<w:tc><w:tcPr><w:tcW w:w="1440" w:type="dxa" /></w:tcPr><w:p><w:r><w:t>Cell A</w:t></w:r></w:p></w:tc>
 								<w:tc><w:p><w:r><w:t>Cell B</w:t></w:r></w:p></w:tc>
 							</w:tr>
 						</w:tbl>
@@ -43,7 +43,7 @@ describe('DocxParser', () => {
 		});
 		expect(model.blocks[2]).toMatchObject({
 			type: 'table',
-			rows: [{ cells: [{ blocks: [{ type: 'paragraph' }] }, { blocks: [{ type: 'paragraph' }] }] }],
+			rows: [{ cells: [{ widthPt: 72, blocks: [{ type: 'paragraph' }] }, { widthPt: null, blocks: [{ type: 'paragraph' }] }] }],
 		});
 	});
 

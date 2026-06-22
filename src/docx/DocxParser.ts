@@ -280,6 +280,7 @@ export class DocxParser {
 						colSpan: parsePositiveInt(attr(child(props, 'gridSpan'), 'val')) ?? 1,
 						rowSpan: child(props, 'vMerge') ? 1 : 1,
 						shading: parseHexColor(attr(child(props, 'shd'), 'fill')),
+						widthPt: parseTableCellWidth(child(props, 'tcW')),
 						blocks: this.parseBlocks(cell, docx, stats),
 					};
 				}),
@@ -433,6 +434,12 @@ function mimeTypeForPath(path: string): string {
 function twipsToPoints(value: string | null): number | null {
 	const parsed = Number(value);
 	return value && Number.isFinite(parsed) ? parsed / TWIPS_PER_POINT : null;
+}
+
+function parseTableCellWidth(element: Element | null): number | null {
+	const type = attr(element, 'type');
+	if (type && type !== 'dxa') { return null; }
+	return twipsToPoints(attr(element, 'w'));
 }
 
 function halfPointsToPoints(value: string | null): number | null {

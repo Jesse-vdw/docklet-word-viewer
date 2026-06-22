@@ -43,7 +43,7 @@ export interface WordParagraphFormat { marginBeforePt: number | null; marginAfte
 export interface WordListInfo { numId: string; level: number; format: WordListFormat; label: string; }
 export interface WordTableBlock { type: 'table'; id: string; rows: WordTableRow[]; }
 export interface WordTableRow { cells: WordTableCell[]; }
-export interface WordTableCell { colSpan: number; rowSpan: number; shading: string | null; blocks: WordBlock[]; }
+export interface WordTableCell { colSpan: number; rowSpan: number; shading: string | null; widthPt: number | null; blocks: WordBlock[]; }
 export interface WordPageBreakBlock { type: 'pageBreak'; id: string; }
 export interface WordUnsupportedBlock { type: 'unsupported'; id: string; label: string; detail: string; }
 

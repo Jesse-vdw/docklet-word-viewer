@@ -19,6 +19,8 @@ export const DEFAULT_ZOOM = 1;
 export const MIN_ZOOM = 0.5;
 export const MAX_ZOOM = 2;
 export const ZOOM_STEP = 0.1;
+export const VIEW_STATE_LAYOUT = 'layout';
+export const VIEW_STATE_ZOOM = 'zoom';
 
 export const CMD_OPEN_ACTIVE = 'docklet-word-viewer-open-active-word-file';
 export const CMD_RELOAD_ACTIVE = 'docklet-word-viewer-reload-active-word-file';

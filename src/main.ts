@@ -22,25 +22,20 @@ import { WordViewerView } from './views/WordViewerView.ts';
 
 export default class DockletWordViewerPlugin extends Plugin implements WordViewerSettingsHost {
 	private readonly store = createSettingsStore<WordViewerSettings>(DEFAULT_WORD_VIEWER_SETTINGS);
-	private repository!: WordFileRepository;
-	private parser!: DocxParser;
-	private sfdtParser!: SfdtParser;
-	private conversionClient!: SyncfusionConversionClient;
-	private loader!: WordDocumentLoader;
+	private repository: WordFileRepository | null = null;
+	private parser: DocxParser | null = null;
+	private sfdtParser: SfdtParser | null = null;
+	private conversionClient: SyncfusionConversionClient | null = null;
+	private loader: WordDocumentLoader | null = null;
 
 	get settingsPlugin(): Plugin { return this; }
 	get settingsSignal(): Signal<WordViewerSettings> { return this.store.settingsSignal; }
 	patchSettings(patch: Partial<WordViewerSettings>): void { this.store.patchSettings(patch); }
 
 	override async onload(): Promise<void> {
-		this.repository = new WordFileRepository(this.app);
-		this.parser = new DocxParser();
-		this.sfdtParser = new SfdtParser();
-		this.conversionClient = new SyncfusionConversionClient();
-		this.loader = new WordDocumentLoader(this.parser, this.sfdtParser, this.conversionClient);
 		await this.loadSettings();
 		this.registerSettingsPersistence();
-		this.registerView(C.WORD_VIEW_TYPE, (leaf: WorkspaceLeaf) => new WordViewerView(leaf, this.repository, this.loader, this.settingsSignal));
+		this.registerView(C.WORD_VIEW_TYPE, (leaf: WorkspaceLeaf) => new WordViewerView(leaf, this.getRepository(), this.getLoader(), this.settingsSignal));
 		this.registerExtensions([...C.SUPPORTED_WORD_EXTENSIONS], C.WORD_VIEW_TYPE);
 		this.registerCommands();
 		this.registerEvents();
@@ -102,7 +97,7 @@ export default class DockletWordViewerPlugin extends Plugin implements WordViewe
 	}
 
 	private async openWordDocument(path: string): Promise<void> {
-		const file = this.repository.resolveWordFile(path);
+		const file = this.getRepository().resolveWordFile(path);
 		if (!file) {
 			new Notice(`${C.PLUGIN_NAME}: document not found: ${path}`);
 			return;
@@ -135,5 +130,32 @@ export default class DockletWordViewerPlugin extends Plugin implements WordViewe
 	private getActiveWordView(): WordViewerView | null {
 		const view = this.app.workspace.getActiveViewOfType(WordViewerView);
 		return view instanceof WordViewerView ? view : null;
+	}
+
+	private getRepository(): WordFileRepository {
+		this.repository ??= new WordFileRepository(this.app);
+		return this.repository;
+	}
+
+	private getLoader(): WordDocumentLoader {
+		if (!this.loader) {
+			this.loader = new WordDocumentLoader(this.getParser(), this.getSfdtParser(), this.getConversionClient());
+		}
+		return this.loader;
+	}
+
+	private getParser(): DocxParser {
+		this.parser ??= new DocxParser();
+		return this.parser;
+	}
+
+	private getSfdtParser(): SfdtParser {
+		this.sfdtParser ??= new SfdtParser();
+		return this.sfdtParser;
+	}
+
+	private getConversionClient(): SyncfusionConversionClient {
+		this.conversionClient ??= new SyncfusionConversionClient();
+		return this.conversionClient;
 	}
 }
