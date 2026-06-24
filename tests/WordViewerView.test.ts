@@ -65,6 +65,9 @@ describe('WordViewerView', () => {
 
 		getButtonByTitle(view.containerEl, 'Switch to continuous layout').click();
 		expect(post).toHaveBeenCalledWith(expect.objectContaining({ type: 'layoutChanged', layout: 'continuous' }), '*');
+		view.refreshSettings();
+		expect(view.getState()).toMatchObject({ [VIEW_STATE_LAYOUT]: 'continuous' });
+		expect(getButtonByTitle(view.containerEl, 'Switch to paginated layout')).toBeInstanceOf(HTMLButtonElement);
 
 		getButtonByTitle(view.containerEl, 'Zoom in').click();
 		expect(post).toHaveBeenCalledWith(expect.objectContaining({ type: 'zoomChanged', zoom: 1.1 }), '*');
@@ -120,6 +123,70 @@ describe('WordViewerView', () => {
 		expect(getRequiredElement(view.containerEl, `.${CSS_STATUS}`).textContent).toBe('2 paragraphs · 1 tables · 0 images · 1 links · 140%');
 		expect(view.getState()).toMatchObject({ file: file.path, [VIEW_STATE_LAYOUT]: 'continuous', [VIEW_STATE_ZOOM]: 1.4 });
 	});
+
+	it('does not reload the iframe when the same document state is reapplied', async () => {
+		const { file, iframe, repository, view } = await loadViewWithDocument();
+		const post = vi.spyOn(iframe.contentWindow!, 'postMessage');
+
+		await view.setState({ file: file.path, [VIEW_STATE_LAYOUT]: 'continuous', [VIEW_STATE_ZOOM]: 1.4 }, { history: false });
+
+		expect(repository.readWordFile).toHaveBeenCalledOnce();
+		expect(getRequiredElement(view.containerEl, `.${CSS_VIEWPORT}`).querySelector(`.${CSS_IFRAME}`)).toBe(iframe);
+		expect(post).toHaveBeenCalledWith(expect.objectContaining({ type: 'layoutChanged', layout: 'continuous' }), '*');
+		expect(post).toHaveBeenCalledWith(expect.objectContaining({ type: 'zoomChanged', zoom: 1.4 }), '*');
+		expect(view.getState()).toMatchObject({ file: file.path, [VIEW_STATE_LAYOUT]: 'continuous', [VIEW_STATE_ZOOM]: 1.4 });
+	});
+
+	it('clears previous document fallback actions when another document fails to load', async () => {
+		const { repository, view } = await loadViewWithDocument();
+		const nextFile = makeFile('Broken.docx');
+		vi.mocked(repository.resolveWordFile).mockReturnValue(nextFile);
+		repository.readWordFile.mockRejectedValueOnce(new Error('parse failed'));
+
+		await view.setState({ file: nextFile.path }, { history: false });
+
+		expect(getRequiredElement(view.containerEl, `.${CSS_STATE_TITLE}`).textContent).toBe('Could not render Word document');
+		expect([...view.containerEl.querySelectorAll(`.${CSS_STATE_BUTTON}`)].map((button) => button.textContent)).toEqual([
+			'Try again',
+			'Open in default app',
+		]);
+	});
+
+	it('ignores a stale slow load after the view is retargeted to another document', async () => {
+		const firstFile = makeFile('First.docx');
+		const secondFile = makeFile('Second.docx');
+		const firstRead = deferred<WordReadResult>();
+		const repository = {
+			resolveWordFile: vi.fn((path: string) => path === firstFile.path ? firstFile : secondFile),
+			readWordFile: vi.fn((file: TFile): Promise<WordReadResult> => {
+				if (file.path === firstFile.path) { return firstRead.promise; }
+				return Promise.resolve(readResult(secondFile));
+			}),
+			assertWordFile: vi.fn(),
+		} as unknown as WordFileRepository & {
+			resolveWordFile: ReturnType<typeof vi.fn>;
+			readWordFile: ReturnType<typeof vi.fn>;
+		};
+		const loader = {
+			load: vi.fn(async (read: WordReadResult) => makeModel(read.file.path === firstFile.path ? 'First heading' : 'Second heading')),
+		} as unknown as WordDocumentLoader & { load: ReturnType<typeof vi.fn> };
+		const view = makeView(repository, loader);
+		const testView = view as unknown as TestableWordViewerView;
+		testView.buildDom();
+
+		const firstState = view.setState({ file: firstFile.path }, { history: false });
+		await waitForReadCount(repository, 1);
+		const secondState = view.setState({ file: secondFile.path }, { history: false });
+		const iframe = await waitForIframe(view.containerEl);
+		dispatchFrom(iframe, { channel: BRIDGE_CHANNEL, type: 'ready' });
+		await secondState;
+		firstRead.resolve(readResult(firstFile));
+		await firstState;
+
+		expect(repository.readWordFile).toHaveBeenCalledTimes(2);
+		expect(getRequiredElement(view.containerEl, `.${CSS_OUTLINE_BUTTON}`).textContent).toBe('Second heading');
+		expect(view.getState()).toMatchObject({ file: secondFile.path });
+	});
 });
 
 function makeView(
@@ -159,7 +226,7 @@ function makeFile(path: string): TFile {
 	} as TFile;
 }
 
-function makeModel(): WordDocumentModel {
+function makeModel(heading = 'Heading'): WordDocumentModel {
 	return {
 		title: 'Doc',
 		metadata: { title: null, subject: null, creator: null, description: null, created: null, modified: null },
@@ -169,11 +236,11 @@ function makeModel(): WordDocumentModel {
 		footnotes: [],
 		endnotes: [],
 		comments: [],
-		outline: [{ id: 'p1', title: 'Heading', level: 1 }],
+		outline: [{ id: 'p1', title: heading, level: 1 }],
 		stats: { paragraphs: 2, tables: 1, images: 0, lists: 0, links: 1, comments: 0, footnotes: 0, endnotes: 0, unsupported: 1 },
 		warnings: ['Limited fidelity.'],
 		unsupportedFeatures: ['charts'],
-		plainText: 'Heading',
+		plainText: heading,
 	};
 }
 
@@ -200,18 +267,36 @@ async function loadViewWithDocument(): Promise<{
 }
 
 function makeRepository(file: TFile): WordFileRepository & {
+	resolveWordFile: ReturnType<typeof vi.fn>;
 	readWordFile: ReturnType<typeof vi.fn>;
 } {
 	return {
 		resolveWordFile: vi.fn(() => file),
-		readWordFile: vi.fn(async (): Promise<WordReadResult> => ({
-			file,
-			data: new ArrayBuffer(1),
-			mtime: file.stat.mtime,
-			size: file.stat.size,
-		})),
+		readWordFile: vi.fn(async (): Promise<WordReadResult> => readResult(file)),
 		assertWordFile: vi.fn(),
-	} as unknown as WordFileRepository & { readWordFile: ReturnType<typeof vi.fn> };
+	} as unknown as WordFileRepository & {
+		resolveWordFile: ReturnType<typeof vi.fn>;
+		readWordFile: ReturnType<typeof vi.fn>;
+	};
+}
+
+function readResult(file: TFile): WordReadResult {
+	return {
+		file,
+		data: new ArrayBuffer(1),
+		mtime: file.stat.mtime,
+		size: file.stat.size,
+	};
+}
+
+function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void; reject: (reason?: unknown) => void } {
+	let resolve: (value: T) => void = () => {};
+	let reject: (reason?: unknown) => void = () => {};
+	const promise = new Promise<T>((promiseResolve, promiseReject) => {
+		resolve = promiseResolve;
+		reject = promiseReject;
+	});
+	return { promise, resolve, reject };
 }
 
 function getRequiredElement(root: ParentNode, selector: string): HTMLElement {
@@ -258,7 +343,22 @@ async function waitForStatus(view: WordViewerView, text: string): Promise<void> 
 }
 
 function dispatchFrom(iframe: HTMLIFrameElement, data: unknown): void {
-	window.dispatchEvent(new MessageEvent('message', { data, source: iframe.contentWindow }));
+	window.dispatchEvent(new MessageEvent('message', { data: withBridgeId(iframe, data), source: iframe.contentWindow }));
+}
+
+function withBridgeId(iframe: HTMLIFrameElement, data: unknown): unknown {
+	if (!isRecord(data) || data['channel'] !== BRIDGE_CHANNEL || typeof data['bridgeId'] === 'string') { return data; }
+	return { ...data, bridgeId: getBridgeId(iframe) };
+}
+
+function getBridgeId(iframe: HTMLIFrameElement): string {
+	const match = iframe.srcdoc.match(/const BRIDGE_ID = "([^"]+)";/);
+	if (!match?.[1]) { throw new Error('Missing bridge id in iframe srcdoc.'); }
+	return match[1];
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null;
 }
 
 function getButtonByTitle(root: ParentNode, title: string): HTMLButtonElement {

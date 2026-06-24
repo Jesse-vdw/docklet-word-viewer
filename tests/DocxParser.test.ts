@@ -51,16 +51,20 @@ describe('DocxParser', () => {
 		const parser = new DocxParser();
 		const model = parser.parse(makeDocxPackage({
 			'word/document.xml': makeSimpleDocumentXml('Body'),
-			'word/header1.xml': '<w:hdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p><w:r><w:t>Header</w:t></w:r></w:p></w:hdr>',
+			'word/header1.xml': '<w:hdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:p><w:r><w:t>Header</w:t></w:r><w:r><w:drawing><a:blip xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" r:embed="rHeaderImage" /><wp:docPr xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" descr="Header logo" /></w:drawing></w:r></w:p></w:hdr>',
+			'word/_rels/header1.xml.rels': '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rHeaderImage" Target="media/header.png" /></Relationships>',
 			'word/footer1.xml': '<w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p><w:r><w:t>Footer</w:t></w:r></w:p></w:ftr>',
+			'word/media/header.png': new Uint8Array([137, 80, 78, 71]),
 			'word/comments.xml': '<w:comments xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:comment w:id="0" w:author="Alex"><w:p><w:r><w:t>Comment text</w:t></w:r></w:p></w:comment></w:comments>',
 			'word/footnotes.xml': '<w:footnotes xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:footnote w:id="1"><w:p><w:r><w:t>Footnote text</w:t></w:r></w:p></w:footnote></w:footnotes>',
 		}));
 
 		expect(model.headers[0]?.blocks[0]).toMatchObject({ type: 'paragraph' });
 		expect(model.footers[0]?.blocks[0]).toMatchObject({ type: 'paragraph' });
+		expect(JSON.stringify(model.headers)).toContain('"altText":"Header logo"');
 		expect(model.comments[0]).toMatchObject({ id: '0', author: 'Alex', plainText: 'Comment text' });
 		expect(model.footnotes[0]).toMatchObject({ id: '1', plainText: 'Footnote text' });
+		expect(model.plainText).toBe('Body\nHeader[Image: Header logo]\nFooter\nFootnote text\nComment text');
 		expect(model.warnings).toEqual(['Document styles are missing; common Word style names will be inferred where possible.']);
 	});
 

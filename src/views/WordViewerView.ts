@@ -25,6 +25,7 @@ export class WordViewerView extends ItemView {
 	private layout: WordLayoutMode;
 	private zoom = C.DEFAULT_ZOOM;
 	private outlineVisible = true;
+	private loadSequence = 0;
 
 	constructor(
 		leaf: WorkspaceLeaf,
@@ -40,7 +41,10 @@ export class WordViewerView extends ItemView {
 	override getDisplayText(): string { return this.currentFile ? this.currentFile.basename : C.PLUGIN_NAME; }
 	override getIcon(): string { return C.ICON_WORD_VIEWER; }
 	getDocumentPath(): string | null { return this.currentFile?.path ?? null; }
-	override async onClose(): Promise<void> { this.destroyBridge(); }
+	override async onClose(): Promise<void> {
+		this.invalidateCurrentLoad();
+		this.destroyBridge();
+	}
 	async reloadDocument(): Promise<void> { await this.loadCurrentDocument(); }
 	updateTheme(isDark: boolean): void { this.bridge.setTheme(isDark); }
 
@@ -55,21 +59,36 @@ export class WordViewerView extends ItemView {
 
 	override async setState(state: Record<string, unknown>, result: { history: boolean }): Promise<void> {
 		await super.setState(state, result);
-		this.layout = normalizeLayoutState(state[C.VIEW_STATE_LAYOUT], this.settingsSignal.value.defaultLayout);
-		this.zoom = normalizeZoomState(state[C.VIEW_STATE_ZOOM]);
+		const nextLayout = normalizeLayoutState(state[C.VIEW_STATE_LAYOUT], this.settingsSignal.value.defaultLayout);
+		const nextZoom = normalizeZoomState(state[C.VIEW_STATE_ZOOM]);
+		const layoutChanged = this.layout !== nextLayout;
+		const zoomChanged = this.zoom !== nextZoom;
+		this.layout = nextLayout;
+		this.zoom = nextZoom;
 		this.updateLayoutButton();
 		const path = state['file'];
 		if (typeof path !== 'string') {
+			this.invalidateCurrentLoad();
 			this.currentFile = null;
+			this.model = null;
 			this.showEmpty();
+			return;
+		}
+		if (this.currentFile?.path === path && this.model) {
+			if (layoutChanged) { this.bridge.setLayout(this.layout); }
+			if (zoomChanged) { this.bridge.setZoom(this.zoom); }
+			this.showDocumentStatus(this.model);
 			return;
 		}
 		const file = this.repository.resolveWordFile(path);
 		if (!file) {
+			this.invalidateCurrentLoad();
 			this.currentFile = null;
+			this.model = null;
 			this.showError('Word document was not found.', () => void this.setState(state, result));
 			return;
 		}
+		if (this.currentFile?.path !== file.path) { this.model = null; }
 		this.currentFile = file;
 		await this.loadCurrentDocument();
 	}
@@ -85,25 +104,30 @@ export class WordViewerView extends ItemView {
 	}
 
 	refreshSettings(): void {
-		this.layout = this.settingsSignal.value.defaultLayout;
-		this.bridge.setLayout(this.layout);
-		this.updateLayoutButton();
 		if (this.model) { this.showDocumentStatus(this.model); }
 	}
 
 	private async loadCurrentDocument(): Promise<void> {
 		if (!this.currentFile) {
+			this.invalidateCurrentLoad();
 			this.showEmpty();
 			return;
 		}
+		const file = this.currentFile;
+		const loadId = ++this.loadSequence;
 		try {
 			this.showLoading();
 			const settings = this.settingsSignal.value;
-			const read = await this.repository.readWordFile(this.currentFile, settings.maxFileSizeMb);
-			this.model = await this.loader.load(read, settings);
+			const read = await this.repository.readWordFile(file, settings.maxFileSizeMb);
+			if (!this.isCurrentLoad(loadId, file)) { return; }
+			const model = await this.loader.load(read, settings);
+			if (!this.isCurrentLoad(loadId, file)) { return; }
+			this.model = model;
 			await this.mountBridge(this.model);
+			if (!this.isCurrentLoad(loadId, file)) { return; }
 			this.showDocumentStatus(this.model);
 		} catch (error) {
+			if (!this.isCurrentLoad(loadId, file)) { return; }
 			logError('WordViewerView.loadCurrentDocument', error);
 			new Notice(`${C.NOTICE_OPEN_FAILED} - ${getErrorMessage(error)}`);
 			this.showError(getErrorMessage(error), () => void this.loadCurrentDocument());
@@ -298,6 +322,10 @@ export class WordViewerView extends ItemView {
 	}
 
 	private destroyBridge(): void { this.bridge.destroy(); }
+	private invalidateCurrentLoad(): void { this.loadSequence++; }
+	private isCurrentLoad(loadId: number, file: TFile): boolean {
+		return loadId === this.loadSequence && this.currentFile?.path === file.path;
+	}
 }
 
 function setToolbarButtonIcon(button: HTMLButtonElement, icon: string, label: string): void {

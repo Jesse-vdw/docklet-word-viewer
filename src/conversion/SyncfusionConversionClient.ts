@@ -56,6 +56,12 @@ export function resolveImportEndpoint(serviceUrl: string): string | null {
 	}
 	if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') { return null; }
 	if (BLOCKED_PUBLIC_HOSTS.has(parsed.hostname.toLowerCase())) { return null; }
+	const pathSegments = parsed.pathname.split('/').filter(Boolean);
+	if (pathSegments.at(-1)?.toLowerCase() === 'import') {
+		parsed.search = '';
+		parsed.hash = '';
+		return parsed.toString();
+	}
 	if (!parsed.pathname.endsWith('/')) { parsed.pathname = `${parsed.pathname}/`; }
 	return new URL('Import', parsed).toString();
 }

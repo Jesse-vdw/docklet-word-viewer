@@ -64,7 +64,7 @@ export class DocxPackageReader {
 }
 
 function isRelevantZipPath(path: string): boolean {
-	return RELEVANT_PARTS.has(path) || /^word\/(?:header|footer)\d+\.xml$/.test(path) || path.startsWith('word/media/');
+	return RELEVANT_PARTS.has(path) || /^word\/(?:header|footer)\d+\.xml$/.test(path) || /^word\/_rels\/(?:header|footer)\d+\.xml\.rels$/.test(path) || path.startsWith('word/media/');
 }
 
 function collectUnsupportedFeatures(files: Record<string, Uint8Array>, documentXml: XMLDocument): string[] {

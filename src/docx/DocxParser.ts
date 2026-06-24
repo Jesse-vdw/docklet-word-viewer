@@ -61,7 +61,7 @@ export class DocxParser {
 			stats,
 			warnings: uniqueStrings(docx.warnings),
 			unsupportedFeatures,
-			plainText: plainTextFromBlocks(blocks),
+			plainText: documentPlainText(blocks, headers, footers, docx.footnotes, docx.endnotes, docx.comments),
 		};
 	}
 
@@ -296,10 +296,14 @@ export class DocxParser {
 			.flatMap((path): WordHeaderFooter[] => {
 				const bytes = docx.files[path];
 				if (!bytes) { return []; }
+				const partDocx = {
+					...docx,
+					relationships: this.partParser.parseRelationships(docx.files[relationshipsPathForPart(path)]),
+				};
 				return [{
 					id: this.makeId(kind),
 					kind,
-					blocks: this.parseBlocks(parseXml(decodeUtf8(bytes), path).documentElement, docx, stats),
+					blocks: this.parseBlocks(parseXml(decodeUtf8(bytes), path).documentElement, partDocx, stats),
 				}];
 			});
 	}
@@ -373,6 +377,24 @@ function buildOutline(blocks: WordBlock[]): WordOutlineItem[] {
 	});
 }
 
+function documentPlainText(
+	blocks: WordBlock[],
+	headers: WordHeaderFooter[],
+	footers: WordHeaderFooter[],
+	footnotes: Map<string, WordDocumentNote>,
+	endnotes: Map<string, WordDocumentNote>,
+	comments: Map<string, WordDocumentComment>,
+): string {
+	return [
+		plainTextFromBlocks(blocks),
+		...headers.map((part) => plainTextFromBlocks(part.blocks)),
+		...footers.map((part) => plainTextFromBlocks(part.blocks)),
+		...[...footnotes.values()].map((note) => note.plainText),
+		...[...endnotes.values()].map((note) => note.plainText),
+		...[...comments.values()].map((comment) => comment.plainText),
+	].filter((text) => text.length > 0).join('\n');
+}
+
 function plainTextFromBlocks(blocks: WordBlock[]): string {
 	return blocks.map((block) => {
 		if (block.type === 'paragraph') { return textFromInlines(block.inlines); }
@@ -398,6 +420,13 @@ function boolProperty(parent: Element | null, localName: string): boolean {
 
 function normalizeTargetPath(baseDirectory: string, target: string): string {
 	return normalizeZipPath(target.startsWith('/') ? target.slice(1) : `${baseDirectory}/${target}`);
+}
+
+function relationshipsPathForPart(path: string): string {
+	const slashIndex = path.lastIndexOf('/');
+	const directory = slashIndex >= 0 ? path.slice(0, slashIndex) : '';
+	const filename = slashIndex >= 0 ? path.slice(slashIndex + 1) : path;
+	return directory ? `${directory}/_rels/${filename}.rels` : `_rels/${filename}.rels`;
 }
 
 function normalizeZipPath(path: string): string {

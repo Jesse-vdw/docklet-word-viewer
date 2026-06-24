@@ -15,9 +15,11 @@ Docklet Word Viewer opens `.docx` files inside Obsidian with a local-first rende
 
 The local parser is used by default and does not send document content outside Obsidian. Remote conversion is disabled unless explicitly enabled in settings and must point at a self-hosted Syncfusion-compatible service. Known public Syncfusion demo hosts are blocked by the URL resolver.
 
+The offline viewer runs in a sandboxed iframe. Host and iframe messages are tagged with a per-instance bridge id, and messages for other viewer instances are ignored.
+
 ## Optional conversion
 
-When remote conversion is enabled, the plugin posts the document to the configured `.../Import` endpoint and expects SFDT text in response. By default this is only a fallback after local parsing fails. The "Prefer remote conversion" setting can use the self-hosted converter first.
+When remote conversion is enabled, the plugin resolves the configured self-hosted service URL to a single `.../Import` endpoint, posts the document there, and expects SFDT text in response. By default this is only a fallback after local parsing fails. The "Prefer remote conversion" setting can use the self-hosted converter first.
 
 ## Known limitations
 

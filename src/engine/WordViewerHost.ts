@@ -48,6 +48,7 @@ mark.search-match.is-active { background: var(--word-mark-active); color: #11182
 
 const WORD_VIEWER_SCRIPT = String.raw`
 const CHANNEL = 'docklet-word-viewer-bridge';
+const BRIDGE_ID = __WORD_VIEWER_BRIDGE_ID__;
 const page = document.getElementById('page');
 let currentModel = null, currentQuery = '', activeSearchIndex = 0, currentSearchTotal = 0, renderSearchTotal = 0;
 const messageHandlers = {
@@ -78,7 +79,7 @@ const messageHandlers = {
 
 window.addEventListener('message', (event) => {
 	const message = event.data;
-	if (!message || message.channel !== CHANNEL) return;
+	if (!message || message.channel !== CHANNEL || message.bridgeId !== BRIDGE_ID) return;
 	try {
 		messageHandlers[message.type]?.(message);
 	} catch (error) {
@@ -87,7 +88,7 @@ window.addEventListener('message', (event) => {
 });
 
 function post(type, payload) {
-	parent.postMessage({ channel: CHANNEL, type, ...(payload || {}) }, '*');
+	parent.postMessage({ channel: CHANNEL, bridgeId: BRIDGE_ID, type, ...(payload || {}) }, '*');
 }
 
 function el(tag, className, text) {
@@ -328,15 +329,20 @@ function finalizeSearch() {
 	renderSearchTotal = 0;
 }
 
-function postSearchResult(total, active) { post('searchResult', { total, active }); }
-function scrollToBlock(blockId) {
-	const target = page.querySelector('[data-block-id="' + String(blockId).replace(/["\\]/g, '') + '"]');
-	if (target) target.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'smooth' });
-}
+	function postSearchResult(total, active) { post('searchResult', { total, active }); }
+	function scrollToBlock(blockId) {
+		const id = String(blockId || '');
+		const escaped = window.CSS && typeof window.CSS.escape === 'function'
+			? window.CSS.escape(id)
+			: id.replace(/[^a-zA-Z0-9_-]/g, '\\$&');
+		const target = page.querySelector('[data-block-id="' + escaped + '"]');
+		if (target) target.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'smooth' });
+	}
 
 post('ready');
 `;
 
-export function buildWordViewerHtml(): string {
-	return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${WORD_VIEWER_CSS}</style></head><body><div class="document-shell"><main class="document"><article id="page" class="page"></article></main></div><script>${WORD_VIEWER_SCRIPT}</script></body></html>`;
+export function buildWordViewerHtml(bridgeId = ''): string {
+	const script = WORD_VIEWER_SCRIPT.replace('__WORD_VIEWER_BRIDGE_ID__', JSON.stringify(bridgeId));
+	return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${WORD_VIEWER_CSS}</style></head><body><div class="document-shell"><main class="document"><article id="page" class="page"></article></main></div><script>${script}</script></body></html>`;
 }

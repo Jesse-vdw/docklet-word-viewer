@@ -106,7 +106,7 @@ export default class DockletWordViewerPlugin extends Plugin implements WordViewe
 			new Notice(`${C.PLUGIN_NAME}: unsupported Word document type: ${file.extension}`);
 			return;
 		}
-		const existing = this.app.workspace.getLeavesOfType(C.WORD_VIEW_TYPE).find((leaf) => leaf.getViewState().state?.['file'] === path);
+		const existing = this.app.workspace.getLeavesOfType(C.WORD_VIEW_TYPE).find((leaf) => this.leafHasDocumentPath(leaf, path));
 		if (existing) {
 			this.app.workspace.revealLeaf(existing);
 			return;
@@ -130,6 +130,11 @@ export default class DockletWordViewerPlugin extends Plugin implements WordViewe
 	private getActiveWordView(): WordViewerView | null {
 		const view = this.app.workspace.getActiveViewOfType(WordViewerView);
 		return view instanceof WordViewerView ? view : null;
+	}
+
+	private leafHasDocumentPath(leaf: WorkspaceLeaf, path: string): boolean {
+		if (leaf.view instanceof WordViewerView) { return leaf.view.getDocumentPath() === path; }
+		return leaf.getViewState().state?.['file'] === path;
 	}
 
 	private getRepository(): WordFileRepository {
