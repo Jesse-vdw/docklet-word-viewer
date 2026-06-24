@@ -43,6 +43,8 @@ Docklet Word Viewer opens `.docx` files in Obsidian through a local-first OOXML 
 
 ```bash
 pnpm --filter docklet-word-viewer check
+pnpm -C plugins check
+pnpm -C plugins release:check
 ```
 
 ---

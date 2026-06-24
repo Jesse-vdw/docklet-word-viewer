@@ -24,3 +24,11 @@ When remote conversion is enabled, the plugin resolves the configured self-hoste
 ## Known limitations
 
 The local renderer is intentionally conservative and does not claim Microsoft Word-perfect pagination. Advanced objects are surfaced as warnings when detected, and the optional SFDT fallback is read-only viewer output rather than an editor.
+
+## Development
+
+```bash
+pnpm --filter docklet-word-viewer check
+pnpm -C plugins check
+pnpm -C plugins release:check
+```
