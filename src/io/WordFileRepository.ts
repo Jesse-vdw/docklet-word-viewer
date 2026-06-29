@@ -1,4 +1,5 @@
 import { TFile, type App } from 'obsidian';
+import { getOfficeExtension } from '@docklet/ooxml';
 import { NOTICE_UNSUPPORTED_FORMAT, isSupportedWordExtension } from '../constants.ts';
 import { WordViewerDomainError } from '../domainErrors.ts';
 
@@ -32,7 +33,7 @@ export class WordFileRepository {
 	}
 
 	assertWordFile(file: TFile): void {
-		if (!isSupportedWordExtension(file.extension)) {
+		if (!isSupportedWordExtension(file.extension) || getOfficeExtension(file.path) !== 'docx') {
 			throw new WordViewerDomainError('INVALID_FORMAT', NOTICE_UNSUPPORTED_FORMAT);
 		}
 	}

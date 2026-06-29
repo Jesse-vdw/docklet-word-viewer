@@ -1,3 +1,4 @@
+import { createBridgeId, formatSandbox } from '@docklet/iframe-bridge';
 import { BRIDGE_CHANNEL, BRIDGE_READY_TIMEOUT_MS, CSS_IFRAME } from '../constants.ts';
 import { WordViewerDomainError } from '../domainErrors.ts';
 import type { WordDocumentModel, WordLayoutMode } from '../docx/wordModel.ts';
@@ -20,14 +21,14 @@ export class WordViewerBridge {
 	constructor(
 		private readonly container: HTMLElement,
 		private readonly callbacks: WordViewerBridgeCallbacks,
-		private readonly bridgeId: string = createBridgeId(),
+		private readonly bridgeId: string = createBridgeId('word-viewer'),
 	) {}
 
 	mount(): Promise<void> {
 		this.destroy();
 		this.iframe = document.createElement('iframe');
 		this.iframe.className = CSS_IFRAME;
-		this.iframe.setAttribute('sandbox', 'allow-scripts');
+		this.iframe.setAttribute('sandbox', formatSandbox(['allow-scripts']));
 		window.addEventListener('message', this.onMessage);
 		this.iframe.srcdoc = buildWordViewerHtml(this.bridgeId);
 		this.container.appendChild(this.iframe);
@@ -117,13 +118,4 @@ export class WordViewerBridge {
 			this.readyTimer = null;
 		}
 	}
-}
-
-let bridgeCounter = 0;
-
-function createBridgeId(): string {
-	const randomId = globalThis.crypto?.randomUUID?.();
-	if (randomId) { return randomId; }
-	bridgeCounter += 1;
-	return `word-viewer-${Date.now()}-${bridgeCounter}`;
 }

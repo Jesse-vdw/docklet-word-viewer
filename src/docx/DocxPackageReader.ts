@@ -1,3 +1,4 @@
+import { createPackageSafetyState, normalizePackagePath, recordPackageEntry, type PackageSafetyLimits } from '@docklet/ooxml';
 import { unzipSync, type UnzipFileInfo } from 'fflate';
 import { WordViewerDomainError } from '../domainErrors.ts';
 import { decodeUtf8, desc, parseXml } from './DocxXml.ts';
@@ -12,9 +13,11 @@ export const COMMENTS_XML_PATH = 'word/comments.xml';
 export const FOOTNOTES_XML_PATH = 'word/footnotes.xml';
 export const ENDNOTES_XML_PATH = 'word/endnotes.xml';
 
-const MAX_ZIP_ENTRIES = 1500;
-const MAX_UNCOMPRESSED_BYTES = 150 * 1024 * 1024;
-const MAX_SINGLE_MEDIA_BYTES = 25 * 1024 * 1024;
+const DOCX_PACKAGE_LIMITS: PackageSafetyLimits = {
+	maxEntries: 1500,
+	maxExpandedBytes: 150 * 1024 * 1024,
+	maxEntryBytes: 25 * 1024 * 1024,
+};
 const RELEVANT_PARTS = new Set([CONTENT_TYPES_PATH, DOCUMENT_XML_PATH, DOCUMENT_RELS_PATH, CORE_PROPS_PATH, STYLES_XML_PATH, NUMBERING_XML_PATH, COMMENTS_XML_PATH, FOOTNOTES_XML_PATH, ENDNOTES_XML_PATH]);
 
 export interface DocxPackageData {
@@ -31,7 +34,7 @@ export class DocxPackageReader {
 
 	read(data: ArrayBuffer): DocxPackageData {
 		const warnings: string[] = [];
-		const stats = { entries: 0, uncompressedBytes: 0 };
+		const stats = createPackageSafetyState();
 		let files: Record<string, Uint8Array>;
 		try {
 			files = this.unzip(new Uint8Array(data), { filter: (file) => this.shouldExtract(file, stats, warnings) });
@@ -49,14 +52,14 @@ export class DocxPackageReader {
 		return { files, documentXml, warnings, unsupportedFeatures };
 	}
 
-	private shouldExtract(file: UnzipFileInfo, stats: { entries: number; uncompressedBytes: number }, warnings: string[]): boolean {
-		stats.entries++;
-		stats.uncompressedBytes += file.originalSize;
-		if (stats.entries > MAX_ZIP_ENTRIES) { throw new WordViewerDomainError('INVALID_PACKAGE', `DOCX package has too many ZIP entries (${stats.entries}).`); }
-		if (stats.uncompressedBytes > MAX_UNCOMPRESSED_BYTES) { throw new WordViewerDomainError('INVALID_PACKAGE', 'DOCX package expands beyond the local safety limit.'); }
-		if (!isRelevantZipPath(file.name)) { return false; }
-		if (file.name.startsWith('word/media/') && file.originalSize > MAX_SINGLE_MEDIA_BYTES) {
-			warnings.push(`Skipped oversized embedded media: ${file.name}.`);
+	private shouldExtract(file: UnzipFileInfo, stats: ReturnType<typeof createPackageSafetyState>, warnings: string[]): boolean {
+		const safety = recordPackageEntry(stats, file.originalSize, DOCX_PACKAGE_LIMITS);
+		if (safety === 'too-many-entries') { throw new WordViewerDomainError('INVALID_PACKAGE', `DOCX package has too many ZIP entries (${stats.entries}).`); }
+		if (safety === 'too-many-expanded-bytes') { throw new WordViewerDomainError('INVALID_PACKAGE', 'DOCX package expands beyond the local safety limit.'); }
+		const path = normalizePackagePath(file.name);
+		if (!path || !isRelevantZipPath(path)) { return false; }
+		if (path.startsWith('word/media/') && safety === 'entry-too-large') {
+			warnings.push(`Skipped oversized embedded media: ${path}.`);
 			return false;
 		}
 		return true;

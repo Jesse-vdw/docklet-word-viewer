@@ -1,21 +1,5 @@
-export function getErrorMessage(error: unknown): string {
-	if (error instanceof Error) { return error.message; }
-	if (typeof error === 'string') { return error; }
-	try {
-		return JSON.stringify(error);
-	} catch {
-		return String(error);
-	}
-}
+import { createPrefixedLogger } from '@docklet/obsidian-kit';
 
-export function logError(context: string, error: unknown): void {
-	console.error(`[docklet-word-viewer] ${context}: ${getErrorMessage(error)}`, error);
-}
+const { logError, logWarning, getErrorMessage } = createPrefixedLogger('[docklet-word-viewer]');
 
-export function logWarning(context: string, message: string, details?: unknown): void {
-	if (details === undefined) {
-		console.warn(`[docklet-word-viewer] ${context}: ${message}`);
-		return;
-	}
-	console.warn(`[docklet-word-viewer] ${context}: ${message}`, details);
-}
+export { getErrorMessage, logError, logWarning };

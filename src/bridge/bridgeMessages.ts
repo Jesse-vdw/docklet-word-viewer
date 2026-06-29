@@ -1,7 +1,8 @@
+import { isBridgeChannelEnvelope, type BridgeChannelEnvelope } from '@docklet/iframe-bridge';
 import { BRIDGE_CHANNEL } from '../constants.ts';
 import type { WordDocumentModel, WordLayoutMode } from '../docx/wordModel.ts';
 
-interface BridgeMessage<T extends string> { channel: typeof BRIDGE_CHANNEL; bridgeId: string; type: T; }
+type BridgeMessage<T extends string> = BridgeChannelEnvelope<typeof BRIDGE_CHANNEL, T>;
 export interface LoadDocumentMessage extends BridgeMessage<'loadDocument'> { document: WordDocumentModel; isDark: boolean; layout: WordLayoutMode; }
 export interface ThemeChangedMessage extends BridgeMessage<'themeChanged'> { isDark: boolean; }
 export interface LayoutChangedMessage extends BridgeMessage<'layoutChanged'> { layout: WordLayoutMode; }
@@ -17,7 +18,7 @@ export interface SearchResultMessage extends BridgeMessage<'searchResult'> { tot
 export type WordToHostMessage = ReadyMessage | RenderErrorMessage | SearchResultMessage;
 
 export function isWordToHostMessage(value: unknown): value is WordToHostMessage {
-	if (!isRecord(value) || value['channel'] !== BRIDGE_CHANNEL || typeof value['bridgeId'] !== 'string' || typeof value['type'] !== 'string') { return false; }
+	if (!isRecord(value) || !isBridgeChannelEnvelope(value, BRIDGE_CHANNEL)) { return false; }
 	return value['type'] === 'ready'
 		|| (value['type'] === 'renderError' && typeof value['message'] === 'string')
 		|| (value['type'] === 'searchResult' && typeof value['total'] === 'number' && typeof value['active'] === 'number');

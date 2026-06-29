@@ -7,7 +7,7 @@
  */
 import './styles.css';
 import { Notice, Plugin, TFile, type Menu, type TAbstractFile, type WorkspaceLeaf } from 'obsidian';
-import { createSettingsStore } from 'docklet-core';
+import { createSignalSettingsStore } from '@docklet/obsidian-kit';
 import type { Signal } from '@preact/signals-core';
 import * as C from './constants.ts';
 import { SyncfusionConversionClient } from './conversion/SyncfusionConversionClient.ts';
@@ -21,7 +21,7 @@ import { WordDocumentLoader } from './views/WordDocumentLoader.ts';
 import { WordViewerView } from './views/WordViewerView.ts';
 
 export default class DockletWordViewerPlugin extends Plugin implements WordViewerSettingsHost {
-	private readonly store = createSettingsStore<WordViewerSettings>(DEFAULT_WORD_VIEWER_SETTINGS);
+	private readonly store = createSignalSettingsStore<WordViewerSettings>(DEFAULT_WORD_VIEWER_SETTINGS);
 	private repository: WordFileRepository | null = null;
 	private parser: DocxParser | null = null;
 	private sfdtParser: SfdtParser | null = null;
