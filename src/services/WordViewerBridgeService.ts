@@ -27,12 +27,26 @@ export class WordViewerBridgeService {
 		this.bridge.setSearch(search);
 	}
 
-	setTheme(isDark: boolean): void { this.bridge?.setTheme(isDark); }
-	setLayout(layout: WordLayoutMode): void { this.bridge?.setLayout(layout); }
-	setZoom(zoom: number): void { this.bridge?.setZoom(zoom); }
-	setSearch(value: string): void { this.bridge?.setSearch(value); }
-	navigateSearch(direction: 'next' | 'previous'): void { this.bridge?.navigateSearch(direction); }
-	scrollToBlock(id: string): void { this.bridge?.scrollToBlock(id); }
-	destroy(): void { this.bridge?.destroy(); this.bridge = null; }
+	setTheme(isDark: boolean): void {
+		this.bridge?.setTheme(isDark);
+	}
+	setLayout(layout: WordLayoutMode): void {
+		this.bridge?.setLayout(layout);
+	}
+	setZoom(zoom: number): void {
+		this.bridge?.setZoom(zoom);
+	}
+	setSearch(value: string): void {
+		this.bridge?.setSearch(value);
+	}
+	navigateSearch(direction: 'next' | 'previous'): void {
+		this.bridge?.navigateSearch(direction);
+	}
+	scrollToBlock(id: string): void {
+		this.bridge?.scrollToBlock(id);
+	}
+	destroy(): void {
+		this.bridge?.destroy();
+		this.bridge = null;
+	}
 }
-

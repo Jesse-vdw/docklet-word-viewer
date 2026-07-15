@@ -3,19 +3,23 @@ import { SfdtParser } from '../src/docx/SfdtParser.ts';
 describe('SfdtParser', () => {
 	it('converts basic SFDT blocks into the viewer model', () => {
 		const parser = new SfdtParser();
-		const model = parser.parse(JSON.stringify({
-			sections: [{
-				blocks: [
+		const model = parser.parse(
+			JSON.stringify({
+				sections: [
 					{
-						paragraphFormat: { styleName: 'Heading 1' },
-						inlines: [{ text: 'Converted title', characterFormat: { bold: true } }],
-					},
-					{
-						inlines: [{ text: 'Body text', characterFormat: { italic: true, fontSize: 12 } }],
+						blocks: [
+							{
+								paragraphFormat: { styleName: 'Heading 1' },
+								inlines: [{ text: 'Converted title', characterFormat: { bold: true } }],
+							},
+							{
+								inlines: [{ text: 'Body text', characterFormat: { italic: true, fontSize: 12 } }],
+							},
+						],
 					},
 				],
-			}],
-		}));
+			}),
+		);
 
 		expect(model.title).toBe('Converted title');
 		expect(model.outline).toEqual([{ id: expect.any(String), title: 'Converted title', level: 1 }]);
@@ -23,6 +27,8 @@ describe('SfdtParser', () => {
 			type: 'paragraph',
 			inlines: [{ type: 'text', text: 'Body text', italic: true, fontSizePt: 12 }],
 		});
-		expect(model.warnings).toEqual(['Rendered from self-hosted SFDT conversion; advanced editing metadata is not shown.']);
+		expect(model.warnings).toEqual([
+			'Rendered from self-hosted SFDT conversion; advanced editing metadata is not shown.',
+		]);
 	});
 });

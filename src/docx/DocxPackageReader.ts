@@ -1,4 +1,9 @@
-import { createPackageSafetyState, normalizePackagePath, recordPackageEntry, type PackageSafetyLimits } from '@docklet/ooxml';
+import {
+	createPackageSafetyState,
+	normalizePackagePath,
+	recordPackageEntry,
+	type PackageSafetyLimits,
+} from '../shared/ooxml.ts';
 import { unzipSync, type UnzipFileInfo } from 'fflate';
 import { WordViewerDomainError } from '../domainErrors.ts';
 import { decodeUtf8, desc, parseXml } from './DocxXml.ts';
@@ -18,7 +23,17 @@ const DOCX_PACKAGE_LIMITS: PackageSafetyLimits = {
 	maxExpandedBytes: 150 * 1024 * 1024,
 	maxEntryBytes: 25 * 1024 * 1024,
 };
-const RELEVANT_PARTS = new Set([CONTENT_TYPES_PATH, DOCUMENT_XML_PATH, DOCUMENT_RELS_PATH, CORE_PROPS_PATH, STYLES_XML_PATH, NUMBERING_XML_PATH, COMMENTS_XML_PATH, FOOTNOTES_XML_PATH, ENDNOTES_XML_PATH]);
+const RELEVANT_PARTS = new Set([
+	CONTENT_TYPES_PATH,
+	DOCUMENT_XML_PATH,
+	DOCUMENT_RELS_PATH,
+	CORE_PROPS_PATH,
+	STYLES_XML_PATH,
+	NUMBERING_XML_PATH,
+	COMMENTS_XML_PATH,
+	FOOTNOTES_XML_PATH,
+	ENDNOTES_XML_PATH,
+]);
 
 export interface DocxPackageData {
 	files: Record<string, Uint8Array>;
@@ -39,7 +54,9 @@ export class DocxPackageReader {
 		try {
 			files = this.unzip(new Uint8Array(data), { filter: (file) => this.shouldExtract(file, stats, warnings) });
 		} catch (error) {
-			if (error instanceof WordViewerDomainError) { throw error; }
+			if (error instanceof WordViewerDomainError) {
+				throw error;
+			}
 			throw new WordViewerDomainError('INVALID_PACKAGE', `Could not unzip DOCX package: ${String(error)}`);
 		}
 		if (!files[CONTENT_TYPES_PATH] || !files[DOCUMENT_XML_PATH]) {
@@ -47,17 +64,31 @@ export class DocxPackageReader {
 		}
 		const documentXml = parseXml(decodeUtf8(files[DOCUMENT_XML_PATH]), DOCUMENT_XML_PATH);
 		const unsupportedFeatures = collectUnsupportedFeatures(files, documentXml);
-		if (!files[STYLES_XML_PATH]) { warnings.push('Document styles are missing; common Word style names will be inferred where possible.'); }
-		if (unsupportedFeatures.length > 0) { warnings.push(`Unsupported Word features detected: ${unsupportedFeatures.join(', ')}.`); }
+		if (!files[STYLES_XML_PATH]) {
+			warnings.push('Document styles are missing; common Word style names will be inferred where possible.');
+		}
+		if (unsupportedFeatures.length > 0) {
+			warnings.push(`Unsupported Word features detected: ${unsupportedFeatures.join(', ')}.`);
+		}
 		return { files, documentXml, warnings, unsupportedFeatures };
 	}
 
-	private shouldExtract(file: UnzipFileInfo, stats: ReturnType<typeof createPackageSafetyState>, warnings: string[]): boolean {
+	private shouldExtract(
+		file: UnzipFileInfo,
+		stats: ReturnType<typeof createPackageSafetyState>,
+		warnings: string[],
+	): boolean {
 		const safety = recordPackageEntry(stats, file.originalSize, DOCX_PACKAGE_LIMITS);
-		if (safety === 'too-many-entries') { throw new WordViewerDomainError('INVALID_PACKAGE', `DOCX package has too many ZIP entries (${stats.entries}).`); }
-		if (safety === 'too-many-expanded-bytes') { throw new WordViewerDomainError('INVALID_PACKAGE', 'DOCX package expands beyond the local safety limit.'); }
+		if (safety === 'too-many-entries') {
+			throw new WordViewerDomainError('INVALID_PACKAGE', `DOCX package has too many ZIP entries (${stats.entries}).`);
+		}
+		if (safety === 'too-many-expanded-bytes') {
+			throw new WordViewerDomainError('INVALID_PACKAGE', 'DOCX package expands beyond the local safety limit.');
+		}
 		const path = normalizePackagePath(file.name);
-		if (!path || !isRelevantZipPath(path)) { return false; }
+		if (!path || !isRelevantZipPath(path)) {
+			return false;
+		}
 		if (path.startsWith('word/media/') && safety === 'entry-too-large') {
 			warnings.push(`Skipped oversized embedded media: ${path}.`);
 			return false;
@@ -67,7 +98,12 @@ export class DocxPackageReader {
 }
 
 function isRelevantZipPath(path: string): boolean {
-	return RELEVANT_PARTS.has(path) || /^word\/(?:header|footer)\d+\.xml$/.test(path) || /^word\/_rels\/(?:header|footer)\d+\.xml\.rels$/.test(path) || path.startsWith('word/media/');
+	return (
+		RELEVANT_PARTS.has(path) ||
+		/^word\/(?:header|footer)\d+\.xml$/.test(path) ||
+		/^word\/_rels\/(?:header|footer)\d+\.xml\.rels$/.test(path) ||
+		path.startsWith('word/media/')
+	);
 }
 
 function collectUnsupportedFeatures(files: Record<string, Uint8Array>, documentXml: XMLDocument): string[] {

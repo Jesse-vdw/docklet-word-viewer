@@ -14,7 +14,9 @@ HTMLElement.prototype.createEl = function <K extends keyof HTMLElementTagNameMap
 			element.classList.add(className);
 		}
 	}
-	if (opts.text !== undefined) { element.textContent = opts.text; }
+	if (opts.text !== undefined) {
+		element.textContent = opts.text;
+	}
 	if (opts.attr) {
 		for (const [key, value] of Object.entries(opts.attr)) {
 			element.setAttribute(key, value);

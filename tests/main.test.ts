@@ -11,7 +11,12 @@ describe('DockletWordViewerPlugin', () => {
 	it('reveals a live Word viewer leaf even when its serialized state is stale', async () => {
 		const file = makeFile('Docs/Live.docx');
 		const plugin = makePlugin();
-		const view = new WordViewerView({} as WorkspaceLeaf, {} as WordFileRepository, {} as WordDocumentLoader, signal(DEFAULT_WORD_VIEWER_SETTINGS));
+		const view = new WordViewerView(
+			{} as WorkspaceLeaf,
+			{} as WordFileRepository,
+			{} as WordDocumentLoader,
+			signal(DEFAULT_WORD_VIEWER_SETTINGS),
+		);
 		vi.spyOn(view, 'getDocumentPath').mockReturnValue(file.path);
 		const existingLeaf = {
 			view,
@@ -26,9 +31,7 @@ describe('DockletWordViewerPlugin', () => {
 				getLeaf: vi.fn(() => ({ setViewState })),
 			},
 		};
-		(plugin as unknown as { repository: WordFileRepository }).repository = {
-			resolveWordFile: vi.fn(() => file),
-		} as unknown as WordFileRepository;
+		setRuntimeRepository(plugin, file);
 
 		await (plugin as unknown as { openWordDocument(path: string): Promise<void> }).openWordDocument(file.path);
 
@@ -51,9 +54,7 @@ describe('DockletWordViewerPlugin', () => {
 				getLeaf: vi.fn(() => ({ setViewState })),
 			},
 		};
-		(plugin as unknown as { repository: WordFileRepository }).repository = {
-			resolveWordFile: vi.fn(() => file),
-		} as unknown as WordFileRepository;
+		setRuntimeRepository(plugin, file);
 
 		await (plugin as unknown as { openWordDocument(path: string): Promise<void> }).openWordDocument(file.path);
 
@@ -63,6 +64,11 @@ describe('DockletWordViewerPlugin', () => {
 
 function makePlugin(): DockletWordViewerPlugin {
 	return new DockletWordViewerPlugin({} as never, {} as never);
+}
+
+function setRuntimeRepository(plugin: DockletWordViewerPlugin, file: TFile): void {
+	const repository = { resolveWordFile: vi.fn(() => file) } as unknown as WordFileRepository;
+	(plugin as unknown as { runtime: { repository: WordFileRepository } }).runtime = { repository };
 }
 
 function makeFile(path: string): TFile {

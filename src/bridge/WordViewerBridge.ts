@@ -1,4 +1,4 @@
-import { createBridgeId, formatSandbox } from '@docklet/iframe-bridge';
+import { createBridgeId, formatSandbox } from '../shared/iframeBridge.ts';
 import { BRIDGE_CHANNEL, BRIDGE_READY_TIMEOUT_MS, CSS_IFRAME } from '../constants.ts';
 import { WordViewerDomainError } from '../domainErrors.ts';
 import type { WordDocumentModel, WordLayoutMode } from '../docx/wordModel.ts';
@@ -45,7 +45,14 @@ export class WordViewerBridge {
 	}
 
 	loadDocument(documentModel: WordDocumentModel, isDark: boolean, layout: WordLayoutMode): void {
-		this.post({ channel: BRIDGE_CHANNEL, bridgeId: this.bridgeId, type: 'loadDocument', document: documentModel, isDark, layout });
+		this.post({
+			channel: BRIDGE_CHANNEL,
+			bridgeId: this.bridgeId,
+			type: 'loadDocument',
+			document: documentModel,
+			isDark,
+			layout,
+		});
 	}
 
 	setTheme(isDark: boolean): void {
@@ -75,8 +82,12 @@ export class WordViewerBridge {
 	destroy(): void {
 		window.removeEventListener('message', this.onMessage);
 		this.clearReadyTimer();
-		this.readyReject?.(new WordViewerDomainError('BRIDGE_DESTROYED', 'Word viewer iframe was destroyed before it became ready.'));
-		if (this.iframe?.parentElement) { this.iframe.parentElement.removeChild(this.iframe); }
+		this.readyReject?.(
+			new WordViewerDomainError('BRIDGE_DESTROYED', 'Word viewer iframe was destroyed before it became ready.'),
+		);
+		if (this.iframe?.parentElement) {
+			this.iframe.parentElement.removeChild(this.iframe);
+		}
 		this.iframe = null;
 		this.ready = false;
 		this.readyResolve = null;
@@ -84,9 +95,15 @@ export class WordViewerBridge {
 	}
 
 	private handleMessage(event: MessageEvent<unknown>): void {
-		if (!this.iframe || event.source !== this.iframe.contentWindow) { return; }
-		if (!isWordToHostMessage(event.data)) { return; }
-		if (event.data.bridgeId !== this.bridgeId) { return; }
+		if (!this.iframe || event.source !== this.iframe.contentWindow) {
+			return;
+		}
+		if (!isWordToHostMessage(event.data)) {
+			return;
+		}
+		if (event.data.bridgeId !== this.bridgeId) {
+			return;
+		}
 		this.dispatch(event.data);
 	}
 
@@ -99,14 +116,18 @@ export class WordViewerBridge {
 			this.readyReject = null;
 			return;
 		}
-		if (message.type === 'renderError') { this.callbacks.onError(message.message); }
+		if (message.type === 'renderError') {
+			this.callbacks.onError(message.message);
+		}
 		if (message.type === 'searchResult') {
 			this.callbacks.onSearchResult({ total: message.total, active: message.active });
 		}
 	}
 
 	private post(message: HostToWordMessage): void {
-		if (!this.iframe?.contentWindow || !this.ready) { return; }
+		if (!this.iframe?.contentWindow || !this.ready) {
+			return;
+		}
 		// The sandboxed srcdoc iframe has an opaque origin, so commands must use "*".
 		// Source-window and bridge-id checks still keep the local protocol scoped.
 		this.iframe.contentWindow.postMessage(message, '*');

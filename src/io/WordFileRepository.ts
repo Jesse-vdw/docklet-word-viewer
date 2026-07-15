@@ -1,5 +1,5 @@
 import { TFile, type App } from 'obsidian';
-import { getOfficeExtension } from '@docklet/ooxml';
+import { getOfficeExtension } from '../shared/ooxml.ts';
 import { NOTICE_UNSUPPORTED_FORMAT, isSupportedWordExtension } from '../constants.ts';
 import { WordViewerDomainError } from '../domainErrors.ts';
 
@@ -22,7 +22,10 @@ export class WordFileRepository {
 		this.assertWordFile(file);
 		const maxBytes = maxFileSizeMb * 1024 * 1024;
 		if (file.stat.size > maxBytes) {
-			throw new WordViewerDomainError('FILE_TOO_LARGE', `Document is ${formatBytes(file.stat.size)}; limit is ${maxFileSizeMb} MB.`);
+			throw new WordViewerDomainError(
+				'FILE_TOO_LARGE',
+				`Document is ${formatBytes(file.stat.size)}; limit is ${maxFileSizeMb} MB.`,
+			);
 		}
 		return {
 			file,
@@ -40,6 +43,8 @@ export class WordFileRepository {
 }
 
 function formatBytes(bytes: number): string {
-	if (bytes < 1024 * 1024) { return `${Math.max(1, Math.round(bytes / 1024))} KB`; }
+	if (bytes < 1024 * 1024) {
+		return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+	}
 	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }

@@ -1,27 +1,59 @@
-import { isBridgeChannelEnvelope, type BridgeChannelEnvelope } from '@docklet/iframe-bridge';
+import { isBridgeChannelEnvelope, type BridgeChannelEnvelope } from '../shared/iframeBridge.ts';
 import { BRIDGE_CHANNEL } from '../constants.ts';
 import type { WordDocumentModel, WordLayoutMode } from '../docx/wordModel.ts';
 
 type BridgeMessage<T extends string> = BridgeChannelEnvelope<typeof BRIDGE_CHANNEL, T>;
-export interface LoadDocumentMessage extends BridgeMessage<'loadDocument'> { document: WordDocumentModel; isDark: boolean; layout: WordLayoutMode; }
-export interface ThemeChangedMessage extends BridgeMessage<'themeChanged'> { isDark: boolean; }
-export interface LayoutChangedMessage extends BridgeMessage<'layoutChanged'> { layout: WordLayoutMode; }
-export interface ZoomChangedMessage extends BridgeMessage<'zoomChanged'> { zoom: number; }
-export interface SearchChangedMessage extends BridgeMessage<'searchChanged'> { query: string; }
-export interface SearchNavigateMessage extends BridgeMessage<'searchNavigate'> { direction: 'next' | 'previous'; }
-export interface ScrollToBlockMessage extends BridgeMessage<'scrollToBlock'> { blockId: string; }
-export type HostToWordMessage = LoadDocumentMessage | ThemeChangedMessage | LayoutChangedMessage | ZoomChangedMessage | SearchChangedMessage | SearchNavigateMessage | ScrollToBlockMessage;
+export interface LoadDocumentMessage extends BridgeMessage<'loadDocument'> {
+	document: WordDocumentModel;
+	isDark: boolean;
+	layout: WordLayoutMode;
+}
+export interface ThemeChangedMessage extends BridgeMessage<'themeChanged'> {
+	isDark: boolean;
+}
+export interface LayoutChangedMessage extends BridgeMessage<'layoutChanged'> {
+	layout: WordLayoutMode;
+}
+export interface ZoomChangedMessage extends BridgeMessage<'zoomChanged'> {
+	zoom: number;
+}
+export interface SearchChangedMessage extends BridgeMessage<'searchChanged'> {
+	query: string;
+}
+export interface SearchNavigateMessage extends BridgeMessage<'searchNavigate'> {
+	direction: 'next' | 'previous';
+}
+export interface ScrollToBlockMessage extends BridgeMessage<'scrollToBlock'> {
+	blockId: string;
+}
+export type HostToWordMessage =
+	| LoadDocumentMessage
+	| ThemeChangedMessage
+	| LayoutChangedMessage
+	| ZoomChangedMessage
+	| SearchChangedMessage
+	| SearchNavigateMessage
+	| ScrollToBlockMessage;
 
 export type ReadyMessage = BridgeMessage<'ready'>;
-export interface RenderErrorMessage extends BridgeMessage<'renderError'> { message: string; }
-export interface SearchResultMessage extends BridgeMessage<'searchResult'> { total: number; active: number; }
+export interface RenderErrorMessage extends BridgeMessage<'renderError'> {
+	message: string;
+}
+export interface SearchResultMessage extends BridgeMessage<'searchResult'> {
+	total: number;
+	active: number;
+}
 export type WordToHostMessage = ReadyMessage | RenderErrorMessage | SearchResultMessage;
 
 export function isWordToHostMessage(value: unknown): value is WordToHostMessage {
-	if (!isRecord(value) || !isBridgeChannelEnvelope(value, BRIDGE_CHANNEL)) { return false; }
-	return value['type'] === 'ready'
-		|| (value['type'] === 'renderError' && typeof value['message'] === 'string')
-		|| (value['type'] === 'searchResult' && typeof value['total'] === 'number' && typeof value['active'] === 'number');
+	if (!isRecord(value) || !isBridgeChannelEnvelope(value, BRIDGE_CHANNEL)) {
+		return false;
+	}
+	return (
+		value['type'] === 'ready' ||
+		(value['type'] === 'renderError' && typeof value['message'] === 'string') ||
+		(value['type'] === 'searchResult' && typeof value['total'] === 'number' && typeof value['active'] === 'number')
+	);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

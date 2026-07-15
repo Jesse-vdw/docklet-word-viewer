@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Validate tag
+        run: pnpm release:tag:check
+      - name: Run production gate
+        run: pnpm check
+      - name: Package release
+        run: pnpm release:package
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "$GITHUB_REF_NAME"
+          "dist/${{ github.event.repository.name }}-${GITHUB_REF_NAME#v}.zip"
+          manifest.json main.js styles.css versions.json dist/SHA256SUMS.txt
+          --verify-tag --generate-notes --title "${{ github.event.repository.name }} $GITHUB_REF_NAME"

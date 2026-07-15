@@ -1,5 +1,3 @@
-@import "@docklet/styleguide/docklet.css";
-
 .dck-word-root {
 	display: flex; flex-direction: column; height: 100%; min-height: 0;
 	background: var(--background-primary); color: var(--text-normal);
@@ -24,6 +22,7 @@
 
 .dck-word-toolbar-button svg { width: 16px; height: 16px; }
 .dck-word-state-button { padding: 7px 10px; line-height: 1; }
+
 .dck-word-toolbar-button:hover,
 .dck-word-state-button:hover,
 .dck-word-outline-button:hover { background: var(--interactive-hover); }
@@ -53,12 +52,14 @@
 
 .dck-word-outline-header { margin-bottom: 8px; font-size: var(--font-ui-smaller); font-weight: 700; text-transform: uppercase; }
 .dck-word-outline-list { display: flex; flex-direction: column; gap: 2px; }
+
 .dck-word-outline-button {
 	width: 100%; padding: 5px 6px; border: 0; border-radius: 5px; background: transparent;
 	color: var(--text-normal); font-size: var(--font-ui-small); line-height: 1.25; text-align: left;
 }
 
 .dck-word-outline-button[data-level="2"] { padding-left: 16px; }
+
 .dck-word-outline-button[data-level="3"],
 .dck-word-outline-button[data-level="4"],
 .dck-word-outline-button[data-level="5"],
@@ -70,6 +71,7 @@
 }
 
 .dck-word-iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--background-primary); }
+
 .dck-word-state {
 	display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
 	box-sizing: border-box; width: 100%; height: 100%; padding: 28px; text-align: center;
@@ -81,9 +83,32 @@
 .dck-word-search-input { width: 128px; height: 30px; padding: 4px 8px; background: var(--background-primary); }
 .dck-word-search-status { min-width: 38px; font-size: var(--font-ui-smaller); text-align: right; }
 
-@media (max-width: 760px) {
+@media (width <= 760px) {
 	.dck-word-toolbar { flex-wrap: wrap; }
 	.dck-word-outline { display: none; }
 	.dck-word-search { order: 2; width: 100%; }
 	.dck-word-search-input { flex: 1 1 auto; width: auto; }
+}
+
+.dck-word-o-shell {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+}
+
+.dck-word-c-view {
+	color: var(--text-normal);
+	background: var(--background-primary);
+}
+
+.dck-word-u-visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
 }

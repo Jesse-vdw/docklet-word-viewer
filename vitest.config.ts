@@ -1,3 +1,17 @@
-import { createPluginVitestConfigFor } from '../vitest.strict.shared';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { defineConfig } from 'vitest/config';
 
-export default createPluginVitestConfigFor('docklet-word-viewer', __dirname);
+const obsidianMock = resolve(import.meta.dirname, 'tests/__mocks__/obsidian.ts');
+const setup = resolve(import.meta.dirname, 'tests/setup.ts');
+
+export default defineConfig({
+	resolve: { alias: existsSync(obsidianMock) ? { obsidian: obsidianMock } : {} },
+	test: {
+		globals: true,
+		environment: 'jsdom',
+		setupFiles: existsSync(setup) ? [setup] : [],
+		clearMocks: true,
+		restoreMocks: true,
+	},
+});

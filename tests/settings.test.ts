@@ -1,7 +1,11 @@
 import { signal } from '@preact/signals-core';
 import { DEFAULT_MAX_FILE_SIZE_MB } from '../src/constants.ts';
 import { renderSettingsSection, type WordViewerSettingsHost } from '../src/settings/SettingsTab.ts';
-import { DEFAULT_WORD_VIEWER_SETTINGS, normalizeWordViewerSettings, type WordViewerSettings } from '../src/settings/settings.ts';
+import {
+	DEFAULT_WORD_VIEWER_SETTINGS,
+	normalizeWordViewerSettings,
+	type WordViewerSettings,
+} from '../src/settings/settings.ts';
 
 describe('normalizeWordViewerSettings', () => {
 	it('fills defaults for missing settings', () => {
@@ -16,14 +20,16 @@ describe('normalizeWordViewerSettings', () => {
 	});
 
 	it('normalizes persisted values conservatively', () => {
-		expect(normalizeWordViewerSettings({
-			defaultLayout: 'continuous',
-			maxFileSizeMb: 500,
-			allowRemoteConversion: true,
-			preferRemoteConversion: true,
-			syncfusionServiceUrl: '  http://localhost:62869/api/documenteditor/  ',
-			remoteConversionTimeoutMs: 500,
-		})).toEqual({
+		expect(
+			normalizeWordViewerSettings({
+				defaultLayout: 'continuous',
+				maxFileSizeMb: 500,
+				allowRemoteConversion: true,
+				preferRemoteConversion: true,
+				syncfusionServiceUrl: '  http://localhost:62869/api/documenteditor/  ',
+				remoteConversionTimeoutMs: 500,
+			}),
+		).toEqual({
 			defaultLayout: 'continuous',
 			maxFileSizeMb: 200,
 			allowRemoteConversion: true,
@@ -104,6 +110,8 @@ function makeHost(settings: WordViewerSettings = DEFAULT_WORD_VIEWER_SETTINGS): 
 
 function getInput(root: ParentNode, label: string): HTMLInputElement {
 	const input = root.querySelector(`input[aria-label="${label}"]`);
-	if (!(input instanceof HTMLInputElement)) { throw new Error(`Missing input: ${label}`); }
+	if (!(input instanceof HTMLInputElement)) {
+		throw new Error(`Missing input: ${label}`);
+	}
 	return input;
 }

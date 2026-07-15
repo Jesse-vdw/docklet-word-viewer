@@ -7,57 +7,81 @@
  */
 import './styles.css';
 import { Notice, Plugin, TFile, type Menu, type TAbstractFile, type WorkspaceLeaf } from 'obsidian';
-import { createSignalSettingsStore } from '@docklet/obsidian-kit';
+import { createSignalSettingsStore } from './shared/settingsStore.ts';
 import type { Signal } from '@preact/signals-core';
 import * as C from './constants.ts';
-import { SyncfusionConversionClient } from './conversion/SyncfusionConversionClient.ts';
-import { DocxParser } from './docx/DocxParser.ts';
-import { SfdtParser } from './docx/SfdtParser.ts';
 import { logError } from './errorLogging.ts';
-import { WordFileRepository } from './io/WordFileRepository.ts';
 import { DockletWordViewerSettingTab, type WordViewerSettingsHost } from './settings/SettingsTab.ts';
-import { DEFAULT_WORD_VIEWER_SETTINGS, normalizeWordViewerSettings, type WordViewerSettings } from './settings/settings.ts';
-import { WordDocumentLoader } from './views/WordDocumentLoader.ts';
+import {
+	DEFAULT_WORD_VIEWER_SETTINGS,
+	normalizeWordViewerSettings,
+	type WordViewerSettings,
+} from './settings/settings.ts';
 import { WordViewerView } from './views/WordViewerView.ts';
+import { DockletWordViewerRuntime } from './runtime/DockletWordViewerRuntime.ts';
 
 export default class DockletWordViewerPlugin extends Plugin implements WordViewerSettingsHost {
 	private readonly store = createSignalSettingsStore<WordViewerSettings>(DEFAULT_WORD_VIEWER_SETTINGS);
-	private repository: WordFileRepository | null = null;
-	private parser: DocxParser | null = null;
-	private sfdtParser: SfdtParser | null = null;
-	private conversionClient: SyncfusionConversionClient | null = null;
-	private loader: WordDocumentLoader | null = null;
+	readonly dockletDescriptor = {
+		schemaVersion: 1,
+		pluginId: C.PLUGIN_ID,
+		name: C.PLUGIN_NAME,
+		version: '1.0.1',
+		capabilities: ['docx-viewing', 'docx-parsing', 'sandboxed-word-runtime', 'optional-document-conversion'],
+	} as const;
+	private runtime: DockletWordViewerRuntime | null = null;
 
-	get settingsPlugin(): Plugin { return this; }
-	get settingsSignal(): Signal<WordViewerSettings> { return this.store.settingsSignal; }
-	patchSettings(patch: Partial<WordViewerSettings>): void { this.store.patchSettings(patch); }
+	get settingsPlugin(): Plugin {
+		return this;
+	}
+	get settingsSignal(): Signal<WordViewerSettings> {
+		return this.store.settingsSignal;
+	}
+	patchSettings(patch: Partial<WordViewerSettings>): void {
+		this.store.patchSettings(patch);
+	}
 
 	override async onload(): Promise<void> {
 		await this.loadSettings();
+		this.runtime = new DockletWordViewerRuntime(this.app, this.settingsSignal);
+		this.runtime.load();
 		this.registerSettingsPersistence();
-		this.registerView(C.WORD_VIEW_TYPE, (leaf: WorkspaceLeaf) => new WordViewerView(leaf, this.getRepository(), this.getLoader(), this.settingsSignal));
+		this.registerView(C.WORD_VIEW_TYPE, (leaf: WorkspaceLeaf) => this.requireRuntime().createView(leaf));
 		this.registerExtensions([...C.SUPPORTED_WORD_EXTENSIONS], C.WORD_VIEW_TYPE);
 		this.registerCommands();
 		this.registerEvents();
 		this.addSettingTab(new DockletWordViewerSettingTab(this.app, this));
 	}
 
-	override onunload(): void { this.app.workspace.detachLeavesOfType(C.WORD_VIEW_TYPE); }
+	override onunload(): void {
+		this.app.workspace.detachLeavesOfType(C.WORD_VIEW_TYPE);
+		this.runtime?.unload();
+		this.runtime = null;
+	}
 
 	private async loadSettings(): Promise<void> {
-		const raw = await this.loadData() as Partial<WordViewerSettings> | null | undefined;
+		const raw = (await this.loadData()) as Partial<WordViewerSettings> | null | undefined;
 		const normalized = normalizeWordViewerSettings(raw);
 		this.store.setSettings(normalized);
-		if (JSON.stringify(raw ?? {}) !== JSON.stringify(normalized)) { await this.saveData(normalized); }
+		if (JSON.stringify(raw ?? {}) !== JSON.stringify(normalized)) {
+			await this.saveData(normalized);
+		}
 	}
 
 	private registerSettingsPersistence(): void {
 		let initialised = false;
-		this.register(this.store.onSettingsChange(() => {
-			if (!initialised) { initialised = true; return; }
-			this.refreshSettingsInAllViews();
-			void this.saveData(this.settingsSignal.value).catch((error: unknown) => logError('DockletWordViewerPlugin.saveData', error));
-		}));
+		this.register(
+			this.store.onSettingsChange(() => {
+				if (!initialised) {
+					initialised = true;
+					return;
+				}
+				this.refreshSettingsInAllViews();
+				void this.saveData(this.settingsSignal.value).catch((error: unknown) =>
+					logError('DockletWordViewerPlugin.saveData', error),
+				);
+			}),
+		);
 	}
 
 	private registerCommands(): void {
@@ -66,8 +90,12 @@ export default class DockletWordViewerPlugin extends Plugin implements WordViewe
 			name: 'Docklet Word Viewer: Open active Word document',
 			checkCallback: (checking) => {
 				const file = this.app.workspace.getActiveFile();
-				if (!(file instanceof TFile) || !C.isSupportedWordExtension(file.extension)) { return false; }
-				if (!checking) { void this.openWordDocument(file.path); }
+				if (!(file instanceof TFile) || !C.isSupportedWordExtension(file.extension)) {
+					return false;
+				}
+				if (!checking) {
+					void this.openWordDocument(file.path);
+				}
 				return true;
 			},
 		});
@@ -76,8 +104,12 @@ export default class DockletWordViewerPlugin extends Plugin implements WordViewe
 			name: 'Docklet Word Viewer: Reload active document',
 			checkCallback: (checking) => {
 				const view = this.getActiveWordView();
-				if (!view) { return false; }
-				if (!checking) { void view.reloadDocument(); }
+				if (!view) {
+					return false;
+				}
+				if (!checking) {
+					void view.reloadDocument();
+				}
 				return true;
 			},
 		});
@@ -89,15 +121,21 @@ export default class DockletWordViewerPlugin extends Plugin implements WordViewe
 	}
 
 	private handleFileMenu(menu: Menu, file: TAbstractFile): void {
-		if (!(file instanceof TFile) || !C.isSupportedWordExtension(file.extension)) { return; }
-		menu.addItem((item) => item
-			.setTitle('Open in Docklet Word Viewer')
-			.setIcon(C.ICON_WORD_VIEWER)
-			.onClick(() => { void this.openWordDocument(file.path); }));
+		if (!(file instanceof TFile) || !C.isSupportedWordExtension(file.extension)) {
+			return;
+		}
+		menu.addItem((item) =>
+			item
+				.setTitle('Open in Docklet Word Viewer')
+				.setIcon(C.ICON_WORD_VIEWER)
+				.onClick(() => {
+					void this.openWordDocument(file.path);
+				}),
+		);
 	}
 
 	private async openWordDocument(path: string): Promise<void> {
-		const file = this.getRepository().resolveWordFile(path);
+		const file = this.requireRuntime().repository.resolveWordFile(path);
 		if (!file) {
 			new Notice(`${C.PLUGIN_NAME}: document not found: ${path}`);
 			return;
@@ -106,24 +144,32 @@ export default class DockletWordViewerPlugin extends Plugin implements WordViewe
 			new Notice(`${C.PLUGIN_NAME}: unsupported Word document type: ${file.extension}`);
 			return;
 		}
-		const existing = this.app.workspace.getLeavesOfType(C.WORD_VIEW_TYPE).find((leaf) => this.leafHasDocumentPath(leaf, path));
+		const existing = this.app.workspace
+			.getLeavesOfType(C.WORD_VIEW_TYPE)
+			.find((leaf) => this.leafHasDocumentPath(leaf, path));
 		if (existing) {
 			this.app.workspace.revealLeaf(existing);
 			return;
 		}
-		await this.app.workspace.getLeaf(false).setViewState({ type: C.WORD_VIEW_TYPE, state: { file: file.path }, active: true });
+		await this.app.workspace
+			.getLeaf(false)
+			.setViewState({ type: C.WORD_VIEW_TYPE, state: { file: file.path }, active: true });
 	}
 
 	private updateThemeInAllViews(): void {
 		const isDark = this.app.isDarkMode();
 		for (const leaf of this.app.workspace.getLeavesOfType(C.WORD_VIEW_TYPE)) {
-			if (leaf.view instanceof WordViewerView) { leaf.view.updateTheme(isDark); }
+			if (leaf.view instanceof WordViewerView) {
+				leaf.view.updateTheme(isDark);
+			}
 		}
 	}
 
 	private refreshSettingsInAllViews(): void {
 		for (const leaf of this.app.workspace.getLeavesOfType(C.WORD_VIEW_TYPE)) {
-			if (leaf.view instanceof WordViewerView) { leaf.view.refreshSettings(); }
+			if (leaf.view instanceof WordViewerView) {
+				leaf.view.refreshSettings();
+			}
 		}
 	}
 
@@ -133,34 +179,17 @@ export default class DockletWordViewerPlugin extends Plugin implements WordViewe
 	}
 
 	private leafHasDocumentPath(leaf: WorkspaceLeaf, path: string): boolean {
-		if (leaf.view instanceof WordViewerView) { return leaf.view.getDocumentPath() === path; }
+		if (leaf.view instanceof WordViewerView) {
+			return leaf.view.getDocumentPath() === path;
+		}
 		return leaf.getViewState().state?.['file'] === path;
 	}
 
-	private getRepository(): WordFileRepository {
-		this.repository ??= new WordFileRepository(this.app);
-		return this.repository;
-	}
-
-	private getLoader(): WordDocumentLoader {
-		if (!this.loader) {
-			this.loader = new WordDocumentLoader(this.getParser(), this.getSfdtParser(), this.getConversionClient());
+	private requireRuntime(): DockletWordViewerRuntime {
+		if (!this.runtime) {
+			this.runtime = new DockletWordViewerRuntime(this.app, this.settingsSignal);
+			this.runtime.load();
 		}
-		return this.loader;
-	}
-
-	private getParser(): DocxParser {
-		this.parser ??= new DocxParser();
-		return this.parser;
-	}
-
-	private getSfdtParser(): SfdtParser {
-		this.sfdtParser ??= new SfdtParser();
-		return this.sfdtParser;
-	}
-
-	private getConversionClient(): SyncfusionConversionClient {
-		this.conversionClient ??= new SyncfusionConversionClient();
-		return this.conversionClient;
+		return this.runtime;
 	}
 }

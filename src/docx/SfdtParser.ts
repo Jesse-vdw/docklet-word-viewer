@@ -1,7 +1,20 @@
-import type { WordBlock, WordDocumentModel, WordInline, WordParagraphBlock, WordTableBlock, WordTextInline } from './wordModel.ts';
+import type {
+	WordBlock,
+	WordDocumentModel,
+	WordInline,
+	WordParagraphBlock,
+	WordTableBlock,
+	WordTextInline,
+} from './wordModel.ts';
 
 const EMPTY_METADATA = { title: null, subject: null, creator: null, description: null, created: null, modified: null };
-const EMPTY_PARAGRAPH_FORMAT = { marginBeforePt: null, marginAfterPt: null, indentLeftPt: null, indentHangingPt: null, firstLineIndentPt: null };
+const EMPTY_PARAGRAPH_FORMAT = {
+	marginBeforePt: null,
+	marginAfterPt: null,
+	indentLeftPt: null,
+	indentHangingPt: null,
+	firstLineIndentPt: null,
+};
 
 export class SfdtParser {
 	private nextId = 1;
@@ -9,7 +22,9 @@ export class SfdtParser {
 	parse(sfdt: string): WordDocumentModel {
 		this.nextId = 1;
 		const root = JSON.parse(sfdt) as unknown;
-		const blocks = asArray(isRecord(root) ? root['sections'] : []).flatMap((section) => isRecord(section) ? this.parseBlocks(asArray(section['blocks'])) : []);
+		const blocks = asArray(isRecord(root) ? root['sections'] : []).flatMap((section) =>
+			isRecord(section) ? this.parseBlocks(asArray(section['blocks'])) : [],
+		);
 		const plainText = plainTextFromBlocks(blocks);
 		return {
 			title: firstTextFromBlocks(blocks) ?? 'Converted Word document',
@@ -20,7 +35,11 @@ export class SfdtParser {
 			footnotes: [],
 			endnotes: [],
 			comments: [],
-			outline: blocks.flatMap((block) => block.type === 'paragraph' && block.headingLevel !== null ? [{ id: block.id, title: plainTextFromInlines(block.inlines), level: block.headingLevel }] : []),
+			outline: blocks.flatMap((block) =>
+				block.type === 'paragraph' && block.headingLevel !== null
+					? [{ id: block.id, title: plainTextFromInlines(block.inlines), level: block.headingLevel }]
+					: [],
+			),
 			stats: {
 				paragraphs: blocks.filter((block) => block.type === 'paragraph').length,
 				tables: blocks.filter((block) => block.type === 'table').length,
@@ -40,7 +59,9 @@ export class SfdtParser {
 
 	private parseBlocks(blocks: unknown[]): WordBlock[] {
 		return blocks.flatMap((block): WordBlock[] => {
-			if (!isRecord(block)) { return []; }
+			if (!isRecord(block)) {
+				return [];
+			}
 			return Array.isArray(block['rows']) ? [this.parseTable(block)] : [this.parseParagraph(block)];
 		});
 	}
@@ -61,7 +82,9 @@ export class SfdtParser {
 	}
 
 	private parseInline(inline: unknown): WordInline[] {
-		if (!isRecord(inline) || typeof inline['text'] !== 'string' || inline['text'].length === 0) { return []; }
+		if (!isRecord(inline) || typeof inline['text'] !== 'string' || inline['text'].length === 0) {
+			return [];
+		}
 		const characterFormat = isRecord(inline['characterFormat']) ? inline['characterFormat'] : {};
 		const textInline: WordTextInline = {
 			type: 'text',
@@ -85,21 +108,37 @@ export class SfdtParser {
 			type: 'table',
 			id: this.makeId('sfdt-table'),
 			rows: asArray(block['rows']).map((row) => ({
-				cells: isRecord(row) ? asArray(row['cells']).map((cell) => ({ colSpan: 1, rowSpan: 1, shading: null, widthPt: null, blocks: isRecord(cell) ? this.parseBlocks(asArray(cell['blocks'])) : [] })) : [],
+				cells: isRecord(row)
+					? asArray(row['cells']).map((cell) => ({
+							colSpan: 1,
+							rowSpan: 1,
+							shading: null,
+							widthPt: null,
+							blocks: isRecord(cell) ? this.parseBlocks(asArray(cell['blocks'])) : [],
+						}))
+					: [],
 			})),
 		};
 	}
 
-	private makeId(prefix: string): string { return `${prefix}-${this.nextId++}`; }
+	private makeId(prefix: string): string {
+		return `${prefix}-${this.nextId++}`;
+	}
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> { return typeof value === 'object' && value !== null; }
-function asArray(value: unknown): unknown[] { return Array.isArray(value) ? value : []; }
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null;
+}
+function asArray(value: unknown): unknown[] {
+	return Array.isArray(value) ? value : [];
+}
 
 function readNestedString(record: Record<string, unknown>, path: string[]): string | null {
 	let current: unknown = record;
 	for (const key of path) {
-		if (!isRecord(current)) { return null; }
+		if (!isRecord(current)) {
+			return null;
+		}
 		current = current[key];
 	}
 	return typeof current === 'string' ? current : null;
@@ -112,22 +151,35 @@ function headingLevelFromStyle(styleName: string | null): number | null {
 
 function firstTextFromBlocks(blocks: WordBlock[]): string | null {
 	for (const block of blocks) {
-		if (block.type !== 'paragraph') { continue; }
+		if (block.type !== 'paragraph') {
+			continue;
+		}
 		const text = plainTextFromInlines(block.inlines).trim();
-		if (text.length > 0) { return text; }
+		if (text.length > 0) {
+			return text;
+		}
 	}
 	return null;
 }
 
 function plainTextFromBlocks(blocks: WordBlock[]): string {
-	return blocks.map((block) => {
-		if (block.type === 'paragraph') { return plainTextFromInlines(block.inlines); }
-		if (block.type === 'pageBreak') { return ''; }
-		if (block.type === 'unsupported') { return block.label; }
-		return block.rows.map((row) => row.cells.map((cell) => plainTextFromBlocks(cell.blocks)).join('\t')).join('\n');
-	}).filter((text) => text.length > 0).join('\n');
+	return blocks
+		.map((block) => {
+			if (block.type === 'paragraph') {
+				return plainTextFromInlines(block.inlines);
+			}
+			if (block.type === 'pageBreak') {
+				return '';
+			}
+			if (block.type === 'unsupported') {
+				return block.label;
+			}
+			return block.rows.map((row) => row.cells.map((cell) => plainTextFromBlocks(cell.blocks)).join('\t')).join('\n');
+		})
+		.filter((text) => text.length > 0)
+		.join('\n');
 }
 
 function plainTextFromInlines(inlines: WordInline[]): string {
-	return inlines.map((inline) => inline.type === 'text' ? inline.text : '').join('');
+	return inlines.map((inline) => (inline.type === 'text' ? inline.text : '')).join('');
 }

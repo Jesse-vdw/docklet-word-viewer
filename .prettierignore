@@ -1,0 +1,7 @@
+main.js
+styles.css
+dist
+node_modules
+coverage
+release
+data.json

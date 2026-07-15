@@ -83,7 +83,9 @@ export class ItemView {
 	constructor(_leaf?: unknown) {}
 
 	async setState(_state: Record<string, unknown>, _result: { history: boolean }): Promise<void> {}
-	getState(): Record<string, unknown> { return {}; }
+	getState(): Record<string, unknown> {
+		return {};
+	}
 }
 
 export class TFile {

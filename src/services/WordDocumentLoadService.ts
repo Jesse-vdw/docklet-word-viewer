@@ -3,7 +3,8 @@ import type { SfdtParser } from '../docx/SfdtParser.ts';
 import type { WordDocumentModel } from '../docx/wordModel.ts';
 import { logError } from '../errorLogging.ts';
 import type { WordViewerSettings } from '../settings/settings.ts';
-import { canUseRemoteConversion, SyncfusionConversionClient } from '../conversion/SyncfusionConversionClient.ts';
+import type { SyncfusionConversionClient } from '../conversion/SyncfusionConversionClient.ts';
+import { canUseRemoteConversion } from '../conversion/SyncfusionConversionClient.ts';
 import type { WordReadResult } from './WordRepositoryService.ts';
 
 export class WordDocumentLoadService {
@@ -25,7 +26,9 @@ export class WordDocumentLoadService {
 		try {
 			return this.parser.parse(read.data);
 		} catch (localError) {
-			if (!canUseRemoteConversion(settings)) { throw localError; }
+			if (!canUseRemoteConversion(settings)) {
+				throw localError;
+			}
 			try {
 				return this.sfdtParser.parse(await this.conversionClient.convertToSfdt(read, settings));
 			} catch (remoteError) {

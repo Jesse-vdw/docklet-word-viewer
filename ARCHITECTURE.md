@@ -1,18 +1,15 @@
-# Architecture - docklet-word-viewer
+# Architecture — Docklet Word Viewer
 
-## Dependency Direction
+## Ownership and flow
 
-- UI surface (`views`/`components`) depends on runtime/service abstractions.
-- Services/adapters/domain own behavior and orchestrate low-level IO/bridge helpers.
-- Cross-plugin integration is runtime-only through plugin access APIs.
+`DockletWordViewerPlugin` owns Obsidian registration and a normalized signal settings store. Repository, DOCX/SFDT parsers, optional conversion client, loader, view, and iframe bridge are separate classes. The flow is `vault binary → package safety/parts → document model → bridge → sandboxed renderer`.
 
-## Composition Root
+The repository validates extension and size before reads. `DocxPackageReader` rejects unsafe paths/expansion and extracts only relevant parts. Parsers are deterministic and independent from Obsidian UI.
 
-- Composition root: `src/main.ts`.
-- Responsibilities: lifecycle registration, dependency wiring, command/view registration, and teardown.
+## Bridge lifecycle
 
-## Allowed Cross-Plugin Touchpoints
+Each `WordViewerView` owns one `WordViewerBridge`. Mount creates a sandboxed opaque-origin iframe and ready timeout. Messages require the expected content window, channel, bridge ID, and discriminated payload. Theme/layout/zoom/search are explicit commands. Destroy clears timeout/listener/DOM ownership; reload replaces the prior bridge cleanly.
 
-- Runtime plugin access helpers and runtime APIs (`getApi()` / `plugin.api`) only.
-- Shared packages explicitly allowed by policy (for example `docklet-core`, `corsa-core`, `@docklet/testing`).
-- Build-time imports from sibling plugin internals are not allowed.
+## Compatibility and release
+
+View type/state, commands, settings, DOCX model behavior, optional conversion semantics, and released hooks remain compatible. Production output is a single self-contained `main.js` plus CSS and metadata.

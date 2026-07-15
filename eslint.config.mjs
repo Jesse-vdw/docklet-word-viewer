@@ -1,1 +1,111 @@
-export { default } from "../eslint.config.mjs";
+import js from '@eslint/js';
+import tseslint from '@typescript-eslint/eslint-plugin';
+import tsparser from '@typescript-eslint/parser';
+import prettier from 'eslint-config-prettier';
+
+export default [
+	{ ignores: ['main.js', 'dist/**', 'node_modules/**', 'coverage/**'] },
+	js.configs.recommended,
+	{
+		files: ['src/**' + '/*.{ts,tsx}', 'tests/**' + '/*.{ts,tsx}'],
+		languageOptions: {
+			parser: tsparser,
+			parserOptions: {
+				project: ['./tsconfig.json', './tsconfig.test.json'],
+				sourceType: 'module',
+				ecmaVersion: 'latest',
+			},
+			globals: {
+				AbortController: 'readonly',
+				AbortSignal: 'readonly',
+				atob: 'readonly',
+				btoa: 'readonly',
+				Blob: 'readonly',
+				Buffer: 'readonly',
+				cancelAnimationFrame: 'readonly',
+				clearInterval: 'readonly',
+				clearTimeout: 'readonly',
+				crypto: 'readonly',
+				CustomEvent: 'readonly',
+				Event: 'readonly',
+				EventTarget: 'readonly',
+				fetch: 'readonly',
+				FileReader: 'readonly',
+				Image: 'readonly',
+				getComputedStyle: 'readonly',
+				window: 'readonly',
+				document: 'readonly',
+				navigator: 'readonly',
+				console: 'readonly',
+				HTMLElement: 'readonly',
+				HTMLIFrameElement: 'readonly',
+				MouseEvent: 'readonly',
+				KeyboardEvent: 'readonly',
+				ResizeObserver: 'readonly',
+				XMLDocument: 'readonly',
+				DOMParser: 'readonly',
+				Node: 'readonly',
+				performance: 'readonly',
+				PointerEvent: 'readonly',
+				requestAnimationFrame: 'readonly',
+				require: 'readonly',
+				setInterval: 'readonly',
+				setTimeout: 'readonly',
+				SVGElement: 'readonly',
+				SVGSVGElement: 'readonly',
+				structuredClone: 'readonly',
+				URL: 'readonly',
+				WheelEvent: 'readonly',
+			},
+		},
+		plugins: { '@typescript-eslint': tseslint },
+		rules: {
+			...tseslint.configs.recommended.rules,
+			'@typescript-eslint/no-explicit-any': 'error',
+			'@typescript-eslint/consistent-type-imports': [
+				'error',
+				{ disallowTypeAnnotations: false, prefer: 'type-imports' },
+			],
+			'@typescript-eslint/no-require-imports': 'off',
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{ argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+			],
+			'no-mixed-spaces-and-tabs': 'off',
+		},
+	},
+	{
+		files: ['tests/**' + '/*.{ts,tsx}'],
+		languageOptions: {
+			globals: {
+				afterAll: 'readonly',
+				afterEach: 'readonly',
+				beforeAll: 'readonly',
+				beforeEach: 'readonly',
+				describe: 'readonly',
+				expect: 'readonly',
+				it: 'readonly',
+				global: 'readonly',
+				process: 'readonly',
+				vi: 'readonly',
+			},
+		},
+		rules: {
+			'@typescript-eslint/consistent-type-imports': 'off',
+			'@typescript-eslint/no-explicit-any': 'off',
+			'@typescript-eslint/no-unused-vars': 'off',
+		},
+	},
+	{
+		files: ['scripts/**/*.mjs', '*.config.mjs'],
+		languageOptions: {
+			globals: {
+				Buffer: 'readonly',
+				console: 'readonly',
+				process: 'readonly',
+				setTimeout: 'readonly',
+			},
+		},
+	},
+	prettier,
+];

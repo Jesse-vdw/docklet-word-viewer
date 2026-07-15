@@ -14,13 +14,24 @@ describe('SyncfusionConversionClient', () => {
 	});
 
 	it('posts DOCX bytes to the Import endpoint and rejects failed or empty responses', async () => {
-		const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('{"sections":[]}', { status: 200 }));
-		await expect(new SyncfusionConversionClient().convertToSfdt(read(), settings({ allowRemoteConversion: true }))).resolves.toBe('{"sections":[]}');
-		expect(fetchSpy).toHaveBeenCalledWith('http://localhost:62869/api/documenteditor/Import', expect.objectContaining({ method: 'POST' }));
+		const fetchSpy = vi
+			.spyOn(globalThis, 'fetch')
+			.mockResolvedValueOnce(new Response('{"sections":[]}', { status: 200 }));
+		await expect(
+			new SyncfusionConversionClient().convertToSfdt(read(), settings({ allowRemoteConversion: true })),
+		).resolves.toBe('{"sections":[]}');
+		expect(fetchSpy).toHaveBeenCalledWith(
+			'http://localhost:62869/api/documenteditor/Import',
+			expect.objectContaining({ method: 'POST' }),
+		);
 		fetchSpy.mockResolvedValueOnce(new Response('', { status: 500 }));
-		await expect(new SyncfusionConversionClient().convertToSfdt(read(), settings({ allowRemoteConversion: true }))).rejects.toThrow(/HTTP 500/);
+		await expect(
+			new SyncfusionConversionClient().convertToSfdt(read(), settings({ allowRemoteConversion: true })),
+		).rejects.toThrow(/HTTP 500/);
 		fetchSpy.mockResolvedValueOnce(new Response('   ', { status: 200 }));
-		await expect(new SyncfusionConversionClient().convertToSfdt(read(), settings({ allowRemoteConversion: true }))).rejects.toThrow(/empty SFDT/);
+		await expect(
+			new SyncfusionConversionClient().convertToSfdt(read(), settings({ allowRemoteConversion: true })),
+		).rejects.toThrow(/empty SFDT/);
 	});
 });
 

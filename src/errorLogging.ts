@@ -1,4 +1,4 @@
-import { createPrefixedLogger } from '@docklet/obsidian-kit';
+import { createPrefixedLogger } from './shared/logger.ts';
 
 const { logError, logWarning, getErrorMessage } = createPrefixedLogger('[docklet-word-viewer]');
 

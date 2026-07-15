@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { TFile } from 'obsidian';
-import { getOfficeExtension } from '@docklet/ooxml';
+import { getOfficeExtension } from '../src/shared/ooxml.ts';
 import { WordViewerDomainError } from '../src/domainErrors.ts';
 import { WordFileRepository } from '../src/io/WordFileRepository.ts';
 
 describe('OOXML Word detection contract', () => {
-	it('accepts only paths classified as docx by @docklet/ooxml', () => {
+	it('accepts only paths classified as DOCX', () => {
 		const repo = new WordFileRepository({} as never);
 		const file = makeFile('Docs/Plan.DOCX', 'DOCX');
 
@@ -26,7 +26,11 @@ function makeFile(path: string, extension: string): TFile {
 	return {
 		path,
 		name: path.split('/').pop() ?? path,
-		basename: path.split('/').pop()?.replace(/\.[^.]+$/, '') ?? path,
+		basename:
+			path
+				.split('/')
+				.pop()
+				?.replace(/\.[^.]+$/, '') ?? path,
 		extension,
 		stat: { ctime: 1, mtime: 1, size: 1 },
 		parent: null,

@@ -1,34 +1,70 @@
 {
-  "name": "docklet-word-viewer",
-  "version": "1.0.0",
-  "description": "Docklet Word document viewer for Obsidian with local DOCX rendering.",
-  "packageManager": "pnpm@10.33.2",
-  "main": "main.js",
-  "type": "module",
-  "scripts": {
-    "check": "node ../scripts/run-plugin-task.mjs check"
-  },
-  "peerDependencies": {
-    "obsidian": "*"
-  },
-  "dependencies": {
-    "@docklet/iframe-bridge": "workspace:*",
-    "@docklet/obsidian-kit": "workspace:*",
-    "@docklet/ooxml": "workspace:*",
-    "fflate": "^0.8.2"
-  },
-  "devDependencies": {
-    "@preact/signals-core": "^1.14.1",
-    "vite": "^7.2.7",
-    "vitest": "^3.2.4",
-    "@docklet/styleguide": "workspace:*"
-  },
-  "private": true,
-  "files": [
-    "manifest.json",
-    "main.js",
-    "styles.css",
-    "versions.json",
-    "resources"
-  ]
+	"name": "docklet-word-viewer",
+	"version": "1.0.1",
+	"description": "Pro local-first Word document viewer with sandboxed rendering and explicit conversion support.",
+	"packageManager": "pnpm@11.13.0",
+	"main": "main.js",
+	"type": "module",
+	"scripts": {
+		"dev": "vite build --watch --mode development",
+		"build": "vite build --mode production",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"lint": "eslint src tests scripts --max-warnings=0",
+		"lint:css": "stylelint \"src/**/*.css\" --allow-empty-input && node scripts/quality-gates.mjs css",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"security:scan": "node scripts/quality-gates.mjs security",
+		"audit:prod": "pnpm audit --prod --audit-level high",
+		"docs:check": "node scripts/quality-gates.mjs docs",
+		"check": "pnpm format:check && pnpm lint && pnpm lint:css && pnpm typecheck && pnpm test && pnpm security:scan && pnpm docs:check && pnpm audit:prod && pnpm build && pnpm release:check",
+		"version:set": "node scripts/release.mjs version",
+		"release:tag:check": "node scripts/release.mjs tag-check",
+		"release:check": "node scripts/release.mjs check",
+		"release:package": "pnpm build && node scripts/release.mjs package",
+		"release:publish": "node scripts/release.mjs publish"
+	},
+	"peerDependencies": {
+		"obsidian": "*"
+	},
+	"dependencies": {
+		"fflate": "^0.8.2"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.31.0",
+		"@preact/signals-core": "^1.14.1",
+		"@types/node": "^24.10.0",
+		"@typescript-eslint/eslint-plugin": "^8.46.0",
+		"@typescript-eslint/parser": "^8.46.0",
+		"axe-core": "^4.12.1",
+		"eslint": "^9.39.0",
+		"eslint-config-prettier": "^10.1.8",
+		"fflate": "^0.8.2",
+		"jsdom": "^27.1.0",
+		"obsidian": "^1.8.7",
+		"prettier": "^3.6.2",
+		"stylelint": "^16.25.0",
+		"stylelint-config-standard": "^39.0.1",
+		"typescript": "^5.9.3",
+		"vite": "^7.2.7",
+		"vitest": "^3.2.4"
+	},
+	"private": true,
+	"files": [
+		"manifest.json",
+		"main.js",
+		"styles.css",
+		"versions.json"
+	],
+	"engines": {
+		"node": ">=24"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Jesse-vdw/docklet-word-viewer.git"
+	},
+	"homepage": "https://github.com/Jesse-vdw/docklet-word-viewer#readme",
+	"bugs": {
+		"url": "https://github.com/Jesse-vdw/docklet-word-viewer/issues"
+	}
 }

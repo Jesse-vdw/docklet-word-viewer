@@ -2,10 +2,13 @@ export const PLUGIN_ID = 'docklet-word-viewer';
 export const PLUGIN_NAME = 'Docklet Word Viewer';
 export const WORD_VIEW_TYPE = 'docklet-word-viewer-view';
 export const CSS_PREFIX = 'dck-word';
+export const CSS_OBJECT_SHELL = `${CSS_PREFIX}-o-shell`;
+export const CSS_COMPONENT_VIEW = `${CSS_PREFIX}-c-view`;
+export const CSS_UTILITY_VISUALLY_HIDDEN = `${CSS_PREFIX}-u-visually-hidden`;
 
 export const EXT_DOCX = 'docx';
 export const SUPPORTED_WORD_EXTENSIONS = [EXT_DOCX] as const;
-export type SupportedWordExtension = typeof SUPPORTED_WORD_EXTENSIONS[number];
+export type SupportedWordExtension = (typeof SUPPORTED_WORD_EXTENSIONS)[number];
 
 export function isSupportedWordExtension(extension: string): extension is SupportedWordExtension {
 	return SUPPORTED_WORD_EXTENSIONS.includes(extension.toLowerCase() as SupportedWordExtension);
