@@ -11,7 +11,11 @@ import { createSignalSettingsStore } from './shared/settingsStore.ts';
 import type { Signal } from '@preact/signals-core';
 import * as C from './constants.ts';
 import { logError } from './errorLogging.ts';
-import { DockletWordViewerSettingTab, type WordViewerSettingsHost } from './settings/SettingsTab.ts';
+import {
+	DockletWordViewerSettingTab,
+	renderSettingsSection,
+	type WordViewerSettingsHost,
+} from './settings/SettingsTab.ts';
 import {
 	DEFAULT_WORD_VIEWER_SETTINGS,
 	normalizeWordViewerSettings,
@@ -19,16 +23,25 @@ import {
 } from './settings/settings.ts';
 import { WordViewerView } from './views/WordViewerView.ts';
 import { DockletWordViewerRuntime } from './runtime/DockletWordViewerRuntime.ts';
+import type { DockletWordViewerApi } from './api.ts';
+import { isAppDarkMode } from './shared/obsidianCompat.ts';
 
 export default class DockletWordViewerPlugin extends Plugin implements WordViewerSettingsHost {
-	private readonly store = createSignalSettingsStore<WordViewerSettings>(DEFAULT_WORD_VIEWER_SETTINGS);
-	readonly dockletDescriptor = {
+	readonly api: DockletWordViewerApi = Object.freeze({
 		schemaVersion: 1,
 		pluginId: C.PLUGIN_ID,
-		name: C.PLUGIN_NAME,
-		version: '1.0.1',
-		capabilities: ['docx-viewing', 'docx-parsing', 'sandboxed-word-runtime', 'optional-document-conversion'],
-	} as const;
+		openDocument: (path: string) => this.openWordDocument(path),
+	});
+	private readonly store = createSignalSettingsStore<WordViewerSettings>(DEFAULT_WORD_VIEWER_SETTINGS);
+	get dockletDescriptor() {
+		return {
+			schemaVersion: 1,
+			pluginId: C.PLUGIN_ID,
+			name: C.PLUGIN_NAME,
+			version: this.manifest.version,
+			capabilities: ['docx-viewing', 'docx-parsing', 'sandboxed-word-runtime', 'optional-document-conversion'],
+		} as const;
+	}
 	private runtime: DockletWordViewerRuntime | null = null;
 
 	get settingsPlugin(): Plugin {
@@ -39,6 +52,13 @@ export default class DockletWordViewerPlugin extends Plugin implements WordViewe
 	}
 	patchSettings(patch: Partial<WordViewerSettings>): void {
 		this.store.patchSettings(patch);
+	}
+	renderSettingsSection(containerEl: HTMLElement): void {
+		const refresh = (): void => {
+			containerEl.empty();
+			renderSettingsSection(containerEl, this, refresh);
+		};
+		refresh();
 	}
 
 	override async onload(): Promise<void> {
@@ -157,7 +177,7 @@ export default class DockletWordViewerPlugin extends Plugin implements WordViewe
 	}
 
 	private updateThemeInAllViews(): void {
-		const isDark = this.app.isDarkMode();
+		const isDark = isAppDarkMode(this.app);
 		for (const leaf of this.app.workspace.getLeavesOfType(C.WORD_VIEW_TYPE)) {
 			if (leaf.view instanceof WordViewerView) {
 				leaf.view.updateTheme(isDark);

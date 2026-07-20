@@ -18,7 +18,7 @@ describe('WordViewerBridge', () => {
 		expect(iframe?.getAttribute('sandbox')).toBe('allow-scripts');
 		expect(iframe?.srcdoc).toContain(BRIDGE_CHANNEL);
 		expect(iframe?.srcdoc).toContain('"test-bridge"');
-		dispatchFrom(iframe, { channel: BRIDGE_CHANNEL, bridgeId: 'test-bridge', type: 'ready' });
+		dispatchFrom(iframe, { protocolVersion: 1, channel: BRIDGE_CHANNEL, bridgeId: 'test-bridge', type: 'ready' });
 		await ready;
 
 		const post = vi.spyOn(iframe!.contentWindow!, 'postMessage');
@@ -31,12 +31,14 @@ describe('WordViewerBridge', () => {
 		);
 
 		dispatchFrom(iframe, {
+			protocolVersion: 1,
 			channel: BRIDGE_CHANNEL,
 			bridgeId: 'test-bridge',
 			type: 'renderError',
 			message: 'bad render',
 		});
 		dispatchFrom(iframe, {
+			protocolVersion: 1,
 			channel: BRIDGE_CHANNEL,
 			bridgeId: 'test-bridge',
 			type: 'searchResult',
@@ -57,16 +59,22 @@ describe('WordViewerBridge', () => {
 		const ready = bridge.mount();
 		const iframe = container.querySelector('iframe');
 
-		dispatchFrom(iframe, { channel: BRIDGE_CHANNEL, bridgeId: 'wrong-bridge', type: 'ready' });
-		dispatchFrom(iframe, { channel: BRIDGE_CHANNEL, type: 'renderError', message: 'missing bridge id' });
+		dispatchFrom(iframe, { protocolVersion: 1, channel: BRIDGE_CHANNEL, bridgeId: 'wrong-bridge', type: 'ready' });
 		dispatchFrom(iframe, {
+			protocolVersion: 1,
+			channel: BRIDGE_CHANNEL,
+			type: 'renderError',
+			message: 'missing bridge id',
+		});
+		dispatchFrom(iframe, {
+			protocolVersion: 1,
 			channel: BRIDGE_CHANNEL,
 			bridgeId: 'wrong-bridge',
 			type: 'searchResult',
 			total: 2,
 			active: 0,
 		});
-		dispatchFrom(iframe, { channel: BRIDGE_CHANNEL, bridgeId: 'expected-bridge', type: 'ready' });
+		dispatchFrom(iframe, { protocolVersion: 1, channel: BRIDGE_CHANNEL, bridgeId: 'expected-bridge', type: 'ready' });
 		await ready;
 
 		expect(onError).not.toHaveBeenCalled();
@@ -85,7 +93,13 @@ describe('WordViewerBridge', () => {
 		const ready = bridge.mount();
 		window.dispatchEvent(
 			new MessageEvent('message', {
-				data: { channel: BRIDGE_CHANNEL, bridgeId: 'test-bridge', type: 'renderError', message: 'wrong source' },
+				data: {
+					protocolVersion: 1,
+					channel: BRIDGE_CHANNEL,
+					bridgeId: 'test-bridge',
+					type: 'renderError',
+					message: 'wrong source',
+				},
 			}),
 		);
 		expect(onError).not.toHaveBeenCalled();

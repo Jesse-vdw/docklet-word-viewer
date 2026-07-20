@@ -10,6 +10,7 @@ const SANDBOX_TOKENS = new Set([
 ]);
 
 export interface BridgeChannelEnvelope<C extends string, T extends string> {
+	protocolVersion: 1;
 	channel: C;
 	bridgeId: string;
 	type: T;
@@ -35,6 +36,7 @@ export function isBridgeChannelEnvelope<C extends string>(
 	if (typeof value !== 'object' || value === null) return false;
 	const record = value as Record<string, unknown>;
 	return (
+		record['protocolVersion'] === 1 &&
 		record['channel'] === channel &&
 		typeof record['bridgeId'] === 'string' &&
 		record['bridgeId'].length > 0 &&

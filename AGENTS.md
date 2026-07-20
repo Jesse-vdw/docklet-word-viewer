@@ -3,7 +3,7 @@
 ## Identity
 
 - Package and plugin ID: `docklet-word-viewer`
-- Version: `1.0.1`
+- Version: `1.1.0`
 - Entry: `src/main.ts`
 - Bridge: `src/bridge/WordViewerBridge.ts`
 - CSS prefix: `dck-word`
@@ -12,7 +12,8 @@
 
 - Keep parser, repository, loader, conversion client, bridge, and view ownership in injected classes.
 - Validate ZIP paths and size limits before extraction; keep viewing local unless the user explicitly enables a configured conversion service.
-- The iframe uses the minimum sandbox, validates source/channel/bridge/payload, propagates theme/layout/reload explicitly, and tears down symmetrically.
+- The iframe uses the minimum sandbox, validates protocol version/source/channel/bridge/payload, propagates theme/layout/reload explicitly, and tears down symmetrically.
+- Publish document opening through the frozen schema-v1 `plugin.api`.
 - Preserve DOCX behavior, commands, settings, view state, and legacy CSS hooks.
 - OOCSS uses `dck-word-o-*`, `dck-word-c-*`, `dck-word-u-*`, scoped state, and semantic variables.
 

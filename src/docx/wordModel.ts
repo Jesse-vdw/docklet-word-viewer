@@ -1,6 +1,12 @@
 export type WordLayoutMode = 'paginated' | 'continuous';
 export type WordListFormat =
-	'bullet' | 'decimal' | 'lowerLetter' | 'upperLetter' | 'lowerRoman' | 'upperRoman' | 'none';
+	| 'bullet'
+	| 'decimal'
+	| 'lowerLetter'
+	| 'upperLetter'
+	| 'lowerRoman'
+	| 'upperRoman'
+	| 'none';
 export type WordAlignment = 'left' | 'center' | 'right' | 'justify';
 export type WordBlock = WordParagraphBlock | WordTableBlock | WordPageBreakBlock | WordUnsupportedBlock;
 export type WordInline =

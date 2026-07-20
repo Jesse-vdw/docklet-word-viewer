@@ -1,6 +1,21 @@
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 
 describe('release contract', () => {
+	it('keeps runtime descriptor and release metadata on one version', () => {
+		const packageJson = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string };
+		const manifest = JSON.parse(readFileSync('manifest.json', 'utf8')) as {
+			version: string;
+			minAppVersion: string;
+		};
+		const versions = JSON.parse(readFileSync('versions.json', 'utf8')) as Record<string, string>;
+		const entry = existsSync('src/plugin/DockletSlidesPlugin.ts') ? 'src/plugin/DockletSlidesPlugin.ts' : 'src/main.ts';
+		const source = readFileSync(entry, 'utf8');
+
+		expect(manifest.version).toBe(packageJson.version);
+		expect(versions[packageJson.version]).toBe(manifest.minAppVersion);
+		expect(source).toMatch(/dockletDescriptor[\s\S]*?version:\s*this\.manifest\.version/);
+	});
+
 	it('keeps GitHub automation release-only', () => {
 		expect(readdirSync('.github/workflows').sort()).toEqual(['release.yml']);
 		const workflow = readFileSync('.github/workflows/release.yml', 'utf8');

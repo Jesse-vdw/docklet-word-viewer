@@ -46,6 +46,7 @@ export class WordViewerBridge {
 
 	loadDocument(documentModel: WordDocumentModel, isDark: boolean, layout: WordLayoutMode): void {
 		this.post({
+			protocolVersion: 1,
 			channel: BRIDGE_CHANNEL,
 			bridgeId: this.bridgeId,
 			type: 'loadDocument',
@@ -56,27 +57,33 @@ export class WordViewerBridge {
 	}
 
 	setTheme(isDark: boolean): void {
-		this.post({ channel: BRIDGE_CHANNEL, bridgeId: this.bridgeId, type: 'themeChanged', isDark });
+		this.post({ protocolVersion: 1, channel: BRIDGE_CHANNEL, bridgeId: this.bridgeId, type: 'themeChanged', isDark });
 	}
 
 	setLayout(layout: WordLayoutMode): void {
-		this.post({ channel: BRIDGE_CHANNEL, bridgeId: this.bridgeId, type: 'layoutChanged', layout });
+		this.post({ protocolVersion: 1, channel: BRIDGE_CHANNEL, bridgeId: this.bridgeId, type: 'layoutChanged', layout });
 	}
 
 	setZoom(zoom: number): void {
-		this.post({ channel: BRIDGE_CHANNEL, bridgeId: this.bridgeId, type: 'zoomChanged', zoom });
+		this.post({ protocolVersion: 1, channel: BRIDGE_CHANNEL, bridgeId: this.bridgeId, type: 'zoomChanged', zoom });
 	}
 
 	setSearch(query: string): void {
-		this.post({ channel: BRIDGE_CHANNEL, bridgeId: this.bridgeId, type: 'searchChanged', query });
+		this.post({ protocolVersion: 1, channel: BRIDGE_CHANNEL, bridgeId: this.bridgeId, type: 'searchChanged', query });
 	}
 
 	navigateSearch(direction: 'next' | 'previous'): void {
-		this.post({ channel: BRIDGE_CHANNEL, bridgeId: this.bridgeId, type: 'searchNavigate', direction });
+		this.post({
+			protocolVersion: 1,
+			channel: BRIDGE_CHANNEL,
+			bridgeId: this.bridgeId,
+			type: 'searchNavigate',
+			direction,
+		});
 	}
 
 	scrollToBlock(blockId: string): void {
-		this.post({ channel: BRIDGE_CHANNEL, bridgeId: this.bridgeId, type: 'scrollToBlock', blockId });
+		this.post({ protocolVersion: 1, channel: BRIDGE_CHANNEL, bridgeId: this.bridgeId, type: 'scrollToBlock', blockId });
 	}
 
 	destroy(): void {

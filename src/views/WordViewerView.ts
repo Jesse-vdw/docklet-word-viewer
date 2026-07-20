@@ -7,6 +7,7 @@ import type { WordDocumentModel, WordLayoutMode } from '../docx/wordModel.ts';
 import { getErrorMessage, logError } from '../errorLogging.ts';
 import type { WordFileRepository } from '../services/WordRepositoryService.ts';
 import type { WordViewerSettings } from '../settings/settings.ts';
+import { isAppDarkMode } from '../shared/obsidianCompat.ts';
 import type { WordDocumentLoader } from './WordDocumentLoader.ts';
 
 interface ToolbarAction {
@@ -182,7 +183,7 @@ export class WordViewerView extends ItemView {
 				onSearchResult: (result) => this.showSearchResult(result),
 			},
 			model,
-			this.app.isDarkMode(),
+			isAppDarkMode(this.app),
 			this.layout,
 			this.zoom,
 			this.searchInputEl?.value ?? '',

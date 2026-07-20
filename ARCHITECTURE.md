@@ -8,8 +8,8 @@ The repository validates extension and size before reads. `DocxPackageReader` re
 
 ## Bridge lifecycle
 
-Each `WordViewerView` owns one `WordViewerBridge`. Mount creates a sandboxed opaque-origin iframe and ready timeout. Messages require the expected content window, channel, bridge ID, and discriminated payload. Theme/layout/zoom/search are explicit commands. Destroy clears timeout/listener/DOM ownership; reload replaces the prior bridge cleanly.
+Each `WordViewerView` owns one `WordViewerBridge`. Mount creates a sandboxed opaque-origin iframe and ready timeout. Every message carries protocol version 1 and requires the expected content window, channel, bridge ID, and discriminated payload. Theme/layout/zoom/search are explicit commands. Destroy clears timeout/listener/DOM ownership; reload replaces the prior bridge cleanly.
 
 ## Compatibility and release
 
-View type/state, commands, settings, DOCX model behavior, optional conversion semantics, and released hooks remain compatible. Production output is a single self-contained `main.js` plus CSS and metadata.
+View type/state, commands, settings, schema-v1 `plugin.api`, DOCX model behavior, optional conversion semantics, and released hooks are compatibility boundaries. Production output is a single self-contained `main.js` plus CSS and metadata.

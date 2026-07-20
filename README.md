@@ -1,8 +1,8 @@
 # Docklet Word Viewer
 
-Docklet Word Viewer `1.0.1` provides local-first DOCX parsing and viewing in Obsidian, with search, outline, layout, zoom, theme updates, reload, and an optional explicitly enabled self-hosted conversion endpoint.
+Docklet Word Viewer `1.1.0` provides local-first DOCX parsing and viewing in Obsidian, with search, outline, layout, zoom, theme updates, reload, a schema-v1 document-opening API, and an optional explicitly enabled self-hosted conversion endpoint.
 
-DOCX ZIP input is normalized, traversal-safe, and bounded by entry, expanded-size, and per-entry limits. The viewer runs in a local `srcdoc` iframe with `allow-scripts` only. Because that sandbox has an opaque origin, host posts use `*` while source-window, channel, bridge ID, and message-shape checks scope the protocol. Destroy removes listeners, timers, and the iframe.
+DOCX ZIP input is normalized, traversal-safe, and bounded by entry, expanded-size, and per-entry limits. The viewer runs in a local `srcdoc` iframe with `allow-scripts` only. Because that sandbox has an opaque origin, host posts use `*` while protocol version, source-window, channel, bridge ID, and message-shape checks scope the protocol. Destroy removes listeners, timers, and the iframe.
 
 ## Development and smoke checks
 

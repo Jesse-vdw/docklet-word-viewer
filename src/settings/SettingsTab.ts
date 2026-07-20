@@ -27,10 +27,6 @@ export class DockletWordViewerSettingTab extends PluginSettingTab {
 	override display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-		containerEl.createEl('p', {
-			text: 'Configure Docklet Word Viewer rendering, file-size safety, and optional self-hosted remote conversion.',
-			cls: 'setting-item-description',
-		});
 		renderSettingsSection(containerEl, this.host, () => this.display());
 	}
 }
@@ -41,6 +37,10 @@ export function renderSettingsSection(
 	refresh?: () => void,
 ): void {
 	const settings = host.settingsSignal.value;
+	containerEl.createEl('p', {
+		text: 'Configure Docklet Word Viewer rendering, file-size safety, and optional self-hosted remote conversion.',
+		cls: 'setting-item-description',
+	});
 	let serviceUrlInput: TextComponent | null = null;
 	let preferRemoteToggle: ToggleComponent | null = null;
 	let timeoutInput: TextComponent | null = null;

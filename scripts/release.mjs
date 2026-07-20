@@ -28,7 +28,28 @@ async function metadata() {
 	if (pkg.version !== manifest.version) throw new Error('Package and manifest versions differ.');
 	if (versions[pkg.version] !== manifest.minAppVersion)
 		throw new Error('versions.json does not map the release version to minAppVersion.');
+	await verifyDescriptorVersionSource();
 	return { pkg, manifest, versions, tag: `v${pkg.version}` };
+}
+
+async function verifyDescriptorVersionSource() {
+	const candidates = ['src/main.ts', 'src/plugin/DockletSlidesPlugin.ts'];
+	let found = false;
+	for (const candidate of candidates) {
+		let source;
+		try {
+			source = await readFile(join(root, candidate), 'utf8');
+		} catch (error) {
+			if (error?.code === 'ENOENT') continue;
+			throw error;
+		}
+		const descriptor = source.match(/dockletDescriptor[\s\S]*?\{([\s\S]*?)\}\s*as const/);
+		if (!descriptor) continue;
+		found = true;
+		if (!/\bversion:\s*this\.manifest\.version\b/.test(descriptor[1]))
+			throw new Error('dockletDescriptor.version must derive from this.manifest.version.');
+	}
+	if (!found) throw new Error('No dockletDescriptor contract found in the plugin entry source.');
 }
 
 async function setVersion(version) {

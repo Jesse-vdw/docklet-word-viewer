@@ -34,13 +34,11 @@ async function checkDocs() {
 async function checkCss() {
 	const prefix = prefixById[packageJson.name];
 	if (!prefix) throw new Error(`No CSS prefix registered for ${packageJson.name}`);
-	const sourceCssPath = join(root, 'src', 'styles.css');
-	let css;
-	try {
-		css = await readFile(sourceCssPath, 'utf8');
-	} catch {
-		css = await readFile(join(root, 'styles.css'), 'utf8');
-	}
+	const cssFiles = (await walk(root, new Set(['.git', 'node_modules', 'dist', 'coverage', 'release']))).filter(
+		(file) => extname(file).toLowerCase() === '.css',
+	);
+	if (!cssFiles.length) throw new Error('No source CSS files found.');
+	const css = (await Promise.all(cssFiles.map((file) => readFile(file, 'utf8')))).join('\n');
 	const cleanCss = css.replace(/\/\*[\s\S]*?\*\//g, '');
 	if (/#[0-9a-f]{3,8}\b/i.test(css))
 		throw new Error('Hardcoded hexadecimal colors are forbidden; use Obsidian semantic variables.');

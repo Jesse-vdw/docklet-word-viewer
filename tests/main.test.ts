@@ -8,6 +8,10 @@ import { DEFAULT_WORD_VIEWER_SETTINGS } from '../src/settings/settings.ts';
 import { WordViewerView } from '../src/views/WordViewerView.ts';
 
 describe('DockletWordViewerPlugin', () => {
+	it('exposes the structural unified-settings renderer', () => {
+		expect(typeof makePlugin().renderSettingsSection).toBe('function');
+	});
+
 	it('reveals a live Word viewer leaf even when its serialized state is stale', async () => {
 		const file = makeFile('Docs/Live.docx');
 		const plugin = makePlugin();

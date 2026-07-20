@@ -1,10 +1,10 @@
 {
 	"id": "docklet-word-viewer",
-	"name": "Docklet Word Viewer Pro",
-	"version": "1.0.1",
+	"name": "Docklet Word Viewer",
+	"version": "1.1.0",
 	"minAppVersion": "1.7.0",
-	"description": "Pro local-first Word document viewer with sandboxed rendering and explicit conversion support.",
-	"author": "BCT",
+	"description": "Local-first Word document viewer with sandboxed rendering and explicit conversion support.",
+	"author": "",
 	"authorUrl": "",
 	"isDesktopOnly": true
 }

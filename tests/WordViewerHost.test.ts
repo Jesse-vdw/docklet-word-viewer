@@ -8,6 +8,7 @@ describe('buildWordViewerHtml', () => {
 		expect(html).toContain(BRIDGE_CHANNEL);
 		expect(html).toContain('"host-test"');
 		expect(html).toContain('postMessage');
+		expect(html).toContain('message.protocolVersion !== PROTOCOL_VERSION');
 		expect(html).toContain('message.bridgeId !== BRIDGE_ID');
 		expect(html).toContain('loadDocument');
 		expect(html).toContain('searchResult');

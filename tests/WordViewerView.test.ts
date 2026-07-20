@@ -413,10 +413,14 @@ function dispatchFrom(iframe: HTMLIFrameElement, data: unknown): void {
 }
 
 function withBridgeId(iframe: HTMLIFrameElement, data: unknown): unknown {
-	if (!isRecord(data) || data['channel'] !== BRIDGE_CHANNEL || typeof data['bridgeId'] === 'string') {
+	if (!isRecord(data) || data['channel'] !== BRIDGE_CHANNEL) {
 		return data;
 	}
-	return { ...data, bridgeId: getBridgeId(iframe) };
+	return {
+		protocolVersion: data['protocolVersion'] ?? 1,
+		...data,
+		bridgeId: typeof data['bridgeId'] === 'string' ? data['bridgeId'] : getBridgeId(iframe),
+	};
 }
 
 function getBridgeId(iframe: HTMLIFrameElement): string {

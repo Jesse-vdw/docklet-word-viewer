@@ -48,6 +48,7 @@ mark.search-match.is-active { background: var(--word-mark-active); color: #11182
 
 const WORD_VIEWER_SCRIPT = String.raw`
 const CHANNEL = 'docklet-word-viewer-bridge';
+const PROTOCOL_VERSION = 1;
 const BRIDGE_ID = __WORD_VIEWER_BRIDGE_ID__;
 const page = document.getElementById('page');
 let currentModel = null, currentQuery = '', activeSearchIndex = 0, currentSearchTotal = 0, renderSearchTotal = 0;
@@ -79,7 +80,7 @@ const messageHandlers = {
 
 window.addEventListener('message', (event) => {
 	const message = event.data;
-	if (!message || message.channel !== CHANNEL || message.bridgeId !== BRIDGE_ID) return;
+	if (!message || message.protocolVersion !== PROTOCOL_VERSION || message.channel !== CHANNEL || message.bridgeId !== BRIDGE_ID) return;
 	try {
 		messageHandlers[message.type]?.(message);
 	} catch (error) {
@@ -88,7 +89,7 @@ window.addEventListener('message', (event) => {
 });
 
 function post(type, payload) {
-	parent.postMessage({ channel: CHANNEL, bridgeId: BRIDGE_ID, type, ...(payload || {}) }, '*');
+	parent.postMessage({ protocolVersion: PROTOCOL_VERSION, channel: CHANNEL, bridgeId: BRIDGE_ID, type, ...(payload || {}) }, '*');
 }
 
 function el(tag, className, text) {
