@@ -12,6 +12,7 @@ export interface WordViewerBridgeCallbacks {
 
 export class WordViewerBridge {
 	private iframe: HTMLIFrameElement | null = null;
+	private readonly hostWindow: Window;
 	private ready = false;
 	private readyResolve: (() => void) | null = null;
 	private readyReject: ((error: Error) => void) | null = null;
@@ -22,14 +23,16 @@ export class WordViewerBridge {
 		private readonly container: HTMLElement,
 		private readonly callbacks: WordViewerBridgeCallbacks,
 		private readonly bridgeId: string = createBridgeId('word-viewer'),
-	) {}
+	) {
+		this.hostWindow = container.ownerDocument.defaultView ?? window;
+	}
 
 	mount(): Promise<void> {
 		this.destroy();
-		this.iframe = document.createElement('iframe');
+		this.iframe = this.container.ownerDocument.createElement('iframe');
 		this.iframe.className = CSS_IFRAME;
 		this.iframe.setAttribute('sandbox', formatSandbox(['allow-scripts']));
-		window.addEventListener('message', this.onMessage);
+		this.hostWindow.addEventListener('message', this.onMessage);
 		this.iframe.srcdoc = buildWordViewerHtml(this.bridgeId);
 		this.container.appendChild(this.iframe);
 		return new Promise((resolve, reject) => {
@@ -87,7 +90,7 @@ export class WordViewerBridge {
 	}
 
 	destroy(): void {
-		window.removeEventListener('message', this.onMessage);
+		this.hostWindow.removeEventListener('message', this.onMessage);
 		this.clearReadyTimer();
 		this.readyReject?.(
 			new WordViewerDomainError('BRIDGE_DESTROYED', 'Word viewer iframe was destroyed before it became ready.'),

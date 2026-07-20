@@ -82,6 +82,26 @@ describe('WordViewerBridge', () => {
 		bridge.destroy();
 	});
 
+	it('mounts and listens in the window that owns a popout container', async () => {
+		const popout = document.body.appendChild(document.createElement('iframe'));
+		const popoutWindow = popout.contentWindow!;
+		const popoutDocument = popout.contentDocument!;
+		const container = popoutDocument.body.appendChild(popoutDocument.createElement('div'));
+		const bridge = new WordViewerBridge(container, { onError: vi.fn(), onSearchResult: vi.fn() }, 'popout-bridge');
+
+		const ready = bridge.mount();
+		const viewerIframe = container.querySelector('iframe');
+
+		expect(viewerIframe?.ownerDocument).toBe(popoutDocument);
+		dispatchFrom(
+			viewerIframe,
+			{ protocolVersion: 1, channel: BRIDGE_CHANNEL, bridgeId: 'popout-bridge', type: 'ready' },
+			popoutWindow,
+		);
+		await ready;
+		bridge.destroy();
+	});
+
 	it('rejects mount when the iframe never reports ready and ignores invalid messages', async () => {
 		vi.useFakeTimers();
 		const onError = vi.fn();
@@ -120,8 +140,8 @@ describe('WordViewerBridge', () => {
 	});
 });
 
-function dispatchFrom(iframe: HTMLIFrameElement | null, data: unknown): void {
-	window.dispatchEvent(new MessageEvent('message', { data, source: iframe?.contentWindow ?? null }));
+function dispatchFrom(iframe: HTMLIFrameElement | null, data: unknown, hostWindow: Window = window): void {
+	hostWindow.dispatchEvent(new hostWindow.MessageEvent('message', { data, source: iframe?.contentWindow ?? null }));
 }
 
 function makeModel(): WordDocumentModel {
