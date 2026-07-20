@@ -64,6 +64,35 @@ describe('DockletWordViewerPlugin', () => {
 
 		expect(setViewState).toHaveBeenCalledWith({ type: WORD_VIEW_TYPE, state: { file: file.path }, active: true });
 	});
+
+	it('keeps the open-active command available from the active Word viewer', () => {
+		const file = makeFile('Docs/Active.docx');
+		const plugin = makePlugin();
+		const view = new WordViewerView(
+			{} as WorkspaceLeaf,
+			{} as WordFileRepository,
+			{} as WordDocumentLoader,
+			signal(DEFAULT_WORD_VIEWER_SETTINGS),
+		);
+		vi.spyOn(view, 'getDocumentPath').mockReturnValue(file.path);
+		(plugin as unknown as { app: unknown }).app = {
+			workspace: {
+				getActiveViewOfType: vi.fn(() => view),
+				getActiveFile: vi.fn(() => makeFile('Notes/Previous.md')),
+			},
+		};
+		const addCommand = vi.spyOn(plugin, 'addCommand');
+		const openWordDocument = vi
+			.spyOn(plugin as unknown as { openWordDocument(path: string): Promise<void> }, 'openWordDocument')
+			.mockResolvedValue();
+
+		(plugin as unknown as { registerCommands(): void }).registerCommands();
+		const openCommand = addCommand.mock.calls[0]?.[0];
+
+		expect(openCommand?.checkCallback?.(true)).toBe(true);
+		expect(openCommand?.checkCallback?.(false)).toBe(true);
+		expect(openWordDocument).toHaveBeenCalledWith(file.path);
+	});
 });
 
 function makePlugin(): DockletWordViewerPlugin {

@@ -109,12 +109,12 @@ export default class DockletWordViewerPlugin extends Plugin implements WordViewe
 			id: C.CMD_OPEN_ACTIVE,
 			name: 'Docklet Word Viewer: Open active Word document',
 			checkCallback: (checking) => {
-				const file = this.app.workspace.getActiveFile();
-				if (!(file instanceof TFile) || !C.isSupportedWordExtension(file.extension)) {
+				const path = this.getActiveWordDocumentPath();
+				if (!path) {
 					return false;
 				}
 				if (!checking) {
-					void this.openWordDocument(file.path);
+					void this.openWordDocument(path);
 				}
 				return true;
 			},
@@ -196,6 +196,15 @@ export default class DockletWordViewerPlugin extends Plugin implements WordViewe
 	private getActiveWordView(): WordViewerView | null {
 		const view = this.app.workspace.getActiveViewOfType(WordViewerView);
 		return view instanceof WordViewerView ? view : null;
+	}
+
+	private getActiveWordDocumentPath(): string | null {
+		const viewPath = this.getActiveWordView()?.getDocumentPath();
+		if (viewPath) {
+			return viewPath;
+		}
+		const file = this.app.workspace.getActiveFile();
+		return file instanceof TFile && C.isSupportedWordExtension(file.extension) ? file.path : null;
 	}
 
 	private leafHasDocumentPath(leaf: WorkspaceLeaf, path: string): boolean {
