@@ -42,6 +42,10 @@ body.continuous .page { min-height: 0; padding: 34px 40px; box-shadow: none; }
 .note-item, .comment-item { margin: 0 0 12px; font-size: 0.92rem; }
 .note-marker, .comment-marker { color: var(--word-accent); font-size: 0.72em; font-weight: 700; vertical-align: super; }
 a { color: var(--word-accent); text-decoration: underline; }
+.word-authored-color { color: var(--word-authored-color); }
+body.is-dark .word-authored-color.word-low-dark-contrast { color: var(--word-text); }
+body.is-dark .word-light-surface .word-authored-color.word-low-dark-contrast,
+body.is-dark .word-authored-color.word-low-dark-contrast.word-light-surface { color: var(--word-authored-color); }
 mark.search-match { background: var(--word-mark); color: inherit; padding: 0 1px; border-radius: 2px; }
 mark.search-match.is-active { background: var(--word-mark-active); color: #111827; }
 `;
@@ -212,8 +216,15 @@ function renderTextInline(inline) {
 		style.verticalAlign = inline.superscript ? 'super' : 'sub';
 		style.fontSize = '0.75em';
 	}
-	if (inline.color) style.color = inline.color;
-	if (inline.highlight) style.backgroundColor = inline.highlight;
+	if (inline.color) {
+		style.setProperty('--word-authored-color', inline.color);
+		element.classList.add('word-authored-color');
+		if (hasLowDarkContrast(inline.color)) element.classList.add('word-low-dark-contrast');
+	}
+	if (inline.highlight) {
+		style.backgroundColor = inline.highlight;
+		if (isLightSurface(inline.highlight)) element.classList.add('word-light-surface');
+	}
 	if (inline.fontSizePt) style.fontSize = inline.fontSizePt + 'pt';
 	appendSearchText(element, inline.text || '');
 	return element;
@@ -244,6 +255,25 @@ function appendSearchText(parent, text) {
 
 function appendDecoration(current, decoration) {
 	return current && current !== 'none' ? current + ' ' + decoration : decoration;
+}
+
+function relativeLuminance(color) {
+	const match = /^#([0-9a-f]{6})$/i.exec(String(color || ''));
+	if (!match) return null;
+	const channels = [0, 2, 4].map((offset) => Number.parseInt(match[1].slice(offset, offset + 2), 16) / 255)
+		.map((value) => value <= 0.04045 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4));
+	return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+}
+
+function hasLowDarkContrast(color) {
+	const foreground = relativeLuminance(color), background = relativeLuminance('#26282D');
+	if (foreground === null || background === null) return false;
+	return (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05) < 4.5;
+}
+
+function isLightSurface(color) {
+	const luminance = relativeLuminance(color);
+	return luminance !== null && luminance >= 0.45;
 }
 
 function paragraphClass(block) {
@@ -292,7 +322,10 @@ function renderTable(block) {
 			const td = el('td');
 			if (cell.colSpan > 1) td.colSpan = cell.colSpan;
 			if (cell.rowSpan > 1) td.rowSpan = cell.rowSpan;
-			if (cell.shading) td.style.backgroundColor = cell.shading;
+			if (cell.shading) {
+				td.style.backgroundColor = cell.shading;
+				if (isLightSurface(cell.shading)) td.classList.add('word-light-surface');
+			}
 			if (cell.widthPt) td.style.width = cell.widthPt + 'pt';
 			appendBlocks(td, cell.blocks);
 			tr.appendChild(td);

@@ -13,6 +13,10 @@ describe('buildWordViewerHtml', () => {
 		expect(html).toContain('loadDocument');
 		expect(html).toContain('searchResult');
 		expect(html).toContain('word-image');
+		expect(html).toContain('word-low-dark-contrast');
+		expect(html).toContain('word-light-surface');
+		expect(html).toContain('hasLowDarkContrast(inline.color)');
+		expect(html).toContain('isLightSurface(cell.shading)');
 		expect(html).toContain('CSS.escape');
 		expect(html).not.toContain('http://');
 		expect(html).not.toContain('https://');
