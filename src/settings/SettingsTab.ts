@@ -92,7 +92,7 @@ export function renderSettingsSection(
 	serviceUrlInput = textSetting(
 		containerEl,
 		'Syncfusion service URL',
-		'Required for remote conversion. Use a self-hosted endpoint; known public Syncfusion demo hosts are blocked.',
+		'Required for remote conversion. Your document contents are uploaded to this service. Use HTTPS; HTTP is allowed only for localhost/127.0.0.0/8/::1 development services. Known public Syncfusion hosts are blocked.',
 		DEFAULT_SYNCFUSION_SERVICE_URL,
 		settings.syncfusionServiceUrl,
 		(value) => {

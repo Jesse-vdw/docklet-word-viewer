@@ -33,6 +33,17 @@ describe('SyncfusionConversionClient', () => {
 			new SyncfusionConversionClient().convertToSfdt(read(), settings({ allowRemoteConversion: true })),
 		).rejects.toThrow(/empty SFDT/);
 	});
+
+	it('does not upload a document when endpoint validation fails', async () => {
+		const fetchSpy = vi.spyOn(globalThis, 'fetch');
+		await expect(
+			new SyncfusionConversionClient().convertToSfdt(
+				read(),
+				settings({ allowRemoteConversion: true, syncfusionServiceUrl: 'http://converter.example.com/api' }),
+			),
+		).rejects.toThrow(/HTTPS is required/);
+		expect(fetchSpy).not.toHaveBeenCalled();
+	});
 });
 
 function settings(patch: Partial<WordViewerSettings> = {}): WordViewerSettings {

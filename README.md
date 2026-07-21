@@ -13,3 +13,7 @@ pnpm release:package
 ```
 
 Smoke-test DOCX open/reload, outline/search/zoom/layout, malformed and oversized files, missing media/styles, both themes, view teardown, settings cleanup, and remote conversion disabled/enabled. Only exact version tags run releases; publish-and-sync verifies checksums and preserves `data.json`.
+
+## Remote conversion privacy
+
+DOCX parsing is local by default. Remote conversion is disabled until you explicitly enable it and configure a self-hosted service. Enabling it uploads document contents to that configured endpoint; non-loopback endpoints must use HTTPS. Plain HTTP is accepted only for local development services on `localhost`, `127.0.0.0/8`, or `::1`.
