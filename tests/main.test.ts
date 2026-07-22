@@ -93,15 +93,36 @@ describe('DockletWordViewerPlugin', () => {
 		expect(openCommand?.checkCallback?.(false)).toBe(true);
 		expect(openWordDocument).toHaveBeenCalledWith(file.path);
 	});
+
+	it('rejects calls through a retained API after plugin unload', async () => {
+		const file = makeFile('Docs/Retained.docx');
+		const plugin = makePlugin();
+		const unload = setRuntimeRepository(plugin, file);
+		(plugin as unknown as { app: unknown }).app = {
+			workspace: { detachLeavesOfType: vi.fn() },
+		};
+		const retainedApi = plugin.api;
+
+		plugin.onunload();
+
+		await expect(retainedApi.openDocument(file.path)).rejects.toThrow(/runtime is not active/u);
+		expect(unload).toHaveBeenCalledOnce();
+	});
 });
 
 function makePlugin(): DockletWordViewerPlugin {
 	return new DockletWordViewerPlugin({} as never, {} as never);
 }
 
-function setRuntimeRepository(plugin: DockletWordViewerPlugin, file: TFile): void {
+function setRuntimeRepository(plugin: DockletWordViewerPlugin, file: TFile): ReturnType<typeof vi.fn> {
 	const repository = { resolveWordFile: vi.fn(() => file) } as unknown as WordFileRepository;
-	(plugin as unknown as { runtime: { repository: WordFileRepository } }).runtime = { repository };
+	const unload = vi.fn();
+	(plugin as unknown as { runtime: { repository: WordFileRepository; unload(): void }; active: boolean }).runtime = {
+		repository,
+		unload,
+	};
+	(plugin as unknown as { active: boolean }).active = true;
+	return unload;
 }
 
 function makeFile(path: string): TFile {

@@ -25,6 +25,7 @@ import { WordViewerView } from './views/WordViewerView.ts';
 import { DockletWordViewerRuntime } from './runtime/DockletWordViewerRuntime.ts';
 import type { DockletWordViewerApi } from './api.ts';
 import { isAppDarkMode } from './shared/obsidianCompat.ts';
+import { LatestValueWriter } from './shared/latestValueWriter.ts';
 
 export default class DockletWordViewerPlugin extends Plugin implements WordViewerSettingsHost {
 	readonly api: DockletWordViewerApi = Object.freeze({
@@ -43,6 +44,8 @@ export default class DockletWordViewerPlugin extends Plugin implements WordViewe
 		} as const;
 	}
 	private runtime: DockletWordViewerRuntime | null = null;
+	private settingsWriter: LatestValueWriter<WordViewerSettings> | null = null;
+	private active = false;
 
 	get settingsPlugin(): Plugin {
 		return this;
@@ -63,17 +66,34 @@ export default class DockletWordViewerPlugin extends Plugin implements WordViewe
 
 	override async onload(): Promise<void> {
 		await this.loadSettings();
-		this.runtime = new DockletWordViewerRuntime(this.app, this.settingsSignal);
-		this.runtime.load();
-		this.registerSettingsPersistence();
-		this.registerView(C.WORD_VIEW_TYPE, (leaf: WorkspaceLeaf) => this.requireRuntime().createView(leaf));
-		this.registerExtensions([...C.SUPPORTED_WORD_EXTENSIONS], C.WORD_VIEW_TYPE);
-		this.registerCommands();
-		this.registerEvents();
-		this.addSettingTab(new DockletWordViewerSettingTab(this.app, this));
+		this.active = true;
+		try {
+			this.settingsWriter = new LatestValueWriter((settings) => this.saveData(settings), {
+				onError: (error) => logError('DockletWordViewerPlugin.saveData', error),
+			});
+			this.runtime = new DockletWordViewerRuntime(this.app, this.settingsSignal);
+			this.runtime.load();
+			this.registerSettingsPersistence();
+			this.registerView(C.WORD_VIEW_TYPE, (leaf: WorkspaceLeaf) => this.requireRuntime().createView(leaf));
+			this.registerExtensions([...C.SUPPORTED_WORD_EXTENSIONS], C.WORD_VIEW_TYPE);
+			this.registerCommands();
+			this.registerEvents();
+			this.addSettingTab(new DockletWordViewerSettingTab(this.app, this));
+		} catch (error) {
+			this.active = false;
+			this.runtime?.unload();
+			this.runtime = null;
+			void this.settingsWriter?.dispose();
+			this.settingsWriter = null;
+			throw error;
+		}
 	}
 
 	override onunload(): void {
+		this.active = false;
+		const settingsWriter = this.settingsWriter;
+		this.settingsWriter = null;
+		void settingsWriter?.dispose();
 		this.app.workspace.detachLeavesOfType(C.WORD_VIEW_TYPE);
 		this.runtime?.unload();
 		this.runtime = null;
@@ -97,9 +117,7 @@ export default class DockletWordViewerPlugin extends Plugin implements WordViewe
 					return;
 				}
 				this.refreshSettingsInAllViews();
-				void this.saveData(this.settingsSignal.value).catch((error: unknown) =>
-					logError('DockletWordViewerPlugin.saveData', error),
-				);
+				this.settingsWriter?.schedule(structuredClone(this.settingsSignal.value));
 			}),
 		);
 	}
@@ -215,10 +233,7 @@ export default class DockletWordViewerPlugin extends Plugin implements WordViewe
 	}
 
 	private requireRuntime(): DockletWordViewerRuntime {
-		if (!this.runtime) {
-			this.runtime = new DockletWordViewerRuntime(this.app, this.settingsSignal);
-			this.runtime.load();
-		}
+		if (!this.active || !this.runtime) throw new Error(`${C.PLUGIN_NAME}: runtime is not active.`);
 		return this.runtime;
 	}
 }
