@@ -1,10 +1,10 @@
-import type { DocxParser } from '../docx/DocxParser.ts';
-import type { SfdtParser } from '../docx/SfdtParser.ts';
-import type { WordDocumentModel } from '../docx/wordModel.ts';
-import { logError } from '../errorLogging.ts';
+import type { DocxParser } from './docx/DocxParser.ts';
+import type { SfdtParser } from './docx/SfdtParser.ts';
+import type { WordDocumentModel } from './docx/wordModel.ts';
+import { logError } from './errorLogging.ts';
 import type { WordViewerSettings } from '../settings/settings.ts';
-import type { SyncfusionConversionClient } from '../conversion/SyncfusionConversionClient.ts';
-import { canUseRemoteConversion } from '../conversion/SyncfusionConversionClient.ts';
+import type { SyncfusionConversionClient } from '../adapters/conversion/SyncfusionConversionClient.ts';
+import { canUseRemoteConversion } from '../adapters/conversion/SyncfusionConversionClient.ts';
 import type { WordReadResult } from './WordRepositoryService.ts';
 
 export class WordDocumentLoadService {

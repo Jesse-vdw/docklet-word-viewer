@@ -1,0 +1,223 @@
+.dck-word-c-root {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+	background: var(--background-primary);
+	color: var(--text-normal);
+}
+
+.dck-word-c-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 38px;
+	padding: 6px 10px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+}
+
+.dck-word-c-toolbar-button,
+.dck-word-c-state-button,
+.dck-word-c-search-input {
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	background: var(--interactive-normal);
+	color: var(--text-normal);
+	font-size: var(--font-ui-small);
+}
+
+.dck-word-c-toolbar-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	line-height: 1;
+}
+
+.dck-word-c-toolbar-button svg {
+	width: 16px;
+	height: 16px;
+}
+
+.dck-word-c-state-button {
+	padding: 7px 10px;
+	line-height: 1;
+}
+
+.dck-word-c-toolbar-button:hover,
+.dck-word-c-state-button:hover,
+.dck-word-c-outline-button:hover {
+	background: var(--interactive-hover);
+}
+
+.dck-word-c-status,
+.dck-word-c-search-status,
+.dck-word-c-outline-header,
+.dck-word-c-outline-empty,
+.dck-word-c-state-msg {
+	color: var(--text-muted);
+}
+
+.dck-word-c-status {
+	margin-left: auto;
+	overflow: hidden;
+	font-size: var(--font-ui-smaller);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dck-word-c-warning {
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	background: var(--background-modifier-warning);
+	color: var(--text-normal);
+	font-size: var(--font-ui-small);
+}
+
+.dck-word-c-body {
+	display: flex;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.dck-word-c-outline {
+	box-sizing: border-box;
+	width: 230px;
+	min-width: 180px;
+	max-width: 280px;
+	padding: 10px;
+	border-right: 1px solid var(--background-modifier-border);
+	overflow: auto;
+	background: var(--background-secondary);
+}
+
+.dck-word-c-outline-header {
+	margin-bottom: 8px;
+	font-size: var(--font-ui-smaller);
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.dck-word-c-outline-list {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.dck-word-c-outline-button {
+	width: 100%;
+	padding: 5px 6px;
+	border: 0;
+	border-radius: 5px;
+	background: transparent;
+	color: var(--text-normal);
+	font-size: var(--font-ui-small);
+	line-height: 1.25;
+	text-align: left;
+}
+
+.dck-word-c-outline-button[data-level='2'] {
+	padding-left: 16px;
+}
+
+.dck-word-c-outline-button[data-level='3'],
+.dck-word-c-outline-button[data-level='4'],
+.dck-word-c-outline-button[data-level='5'],
+.dck-word-c-outline-button[data-level='6'] {
+	padding-left: 26px;
+}
+
+.dck-word-c-outline-empty {
+	font-size: var(--font-ui-small);
+	line-height: 1.4;
+}
+
+.dck-word-c-viewport {
+	position: relative;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: hidden;
+	background: var(--background-primary);
+}
+
+.dck-word-c-iframe {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border: 0;
+	background: var(--background-primary);
+}
+
+.dck-word-c-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	box-sizing: border-box;
+	width: 100%;
+	height: 100%;
+	padding: 28px;
+	text-align: center;
+}
+
+.dck-word-c-state-title {
+	color: var(--text-normal);
+	font-size: var(--font-ui-large);
+	font-weight: 650;
+}
+
+.dck-word-c-state-msg {
+	max-width: 560px;
+	font-size: var(--font-ui-small);
+	line-height: 1.45;
+}
+
+.dck-word-c-search {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	min-width: 200px;
+	margin-left: 4px;
+}
+
+.dck-word-c-search-input {
+	width: 128px;
+	height: 30px;
+	padding: 4px 8px;
+	background: var(--background-primary);
+}
+
+.dck-word-c-search-status {
+	min-width: 38px;
+	font-size: var(--font-ui-smaller);
+	text-align: right;
+}
+
+@media (width <= 760px) {
+	.dck-word-c-toolbar {
+		flex-wrap: wrap;
+	}
+
+	.dck-word-c-outline {
+		display: none;
+	}
+
+	.dck-word-c-search {
+		order: 2;
+		width: 100%;
+	}
+
+	.dck-word-c-search-input {
+		flex: 1 1 auto;
+		width: auto;
+	}
+}
+
+.dck-word-c-view {
+	color: var(--text-normal);
+	background: var(--background-primary);
+}

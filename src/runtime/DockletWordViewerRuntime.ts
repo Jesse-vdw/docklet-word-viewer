@@ -1,12 +1,12 @@
 import type { Signal } from '@preact/signals-core';
 import type { App, WorkspaceLeaf } from 'obsidian';
-import { SyncfusionConversionClient } from '../conversion/SyncfusionConversionClient.ts';
-import { DocxParser } from '../docx/DocxParser.ts';
-import { SfdtParser } from '../docx/SfdtParser.ts';
-import { WordFileRepository } from '../io/WordFileRepository.ts';
+import { SyncfusionConversionClient } from '../adapters/conversion/SyncfusionConversionClient.ts';
+import { DocxParser } from '../services/docx/DocxParser.ts';
+import { SfdtParser } from '../services/docx/SfdtParser.ts';
+import { WordFileRepository } from '../adapters/io/WordFileRepository.ts';
 import type { WordViewerSettings } from '../settings/settings.ts';
-import { WordDocumentLoader } from '../views/WordDocumentLoader.ts';
-import { WordViewerView } from '../views/WordViewerView.ts';
+import { WordDocumentLoader } from '../ui/views/WordDocumentLoader.ts';
+import { WordViewerView } from '../ui/views/WordViewerView.ts';
 
 /** Instance-owned document runtime and view dependency factory. */
 export class DockletWordViewerRuntime {

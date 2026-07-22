@@ -28,12 +28,12 @@ async function metadata() {
 	if (pkg.version !== manifest.version) throw new Error('Package and manifest versions differ.');
 	if (versions[pkg.version] !== manifest.minAppVersion)
 		throw new Error('versions.json does not map the release version to minAppVersion.');
-	await verifyDescriptorVersionSource();
+	await verifyApiVersionSource();
 	return { pkg, manifest, versions, tag: `v${pkg.version}` };
 }
 
-async function verifyDescriptorVersionSource() {
-	const candidates = ['src/main.ts', 'src/plugin/DockletSlidesPlugin.ts'];
+async function verifyApiVersionSource() {
+	const candidates = ['src/plugin/DockletWordViewerPlugin.ts'];
 	let found = false;
 	for (const candidate of candidates) {
 		let source;
@@ -43,13 +43,10 @@ async function verifyDescriptorVersionSource() {
 			if (error?.code === 'ENOENT') continue;
 			throw error;
 		}
-		const descriptor = source.match(/dockletDescriptor[\s\S]*?\{([\s\S]*?)\}\s*as const/);
-		if (!descriptor) continue;
+		if (!/\bpluginVersion:\s*this\.manifest\.version\b/.test(source)) continue;
 		found = true;
-		if (!/\bversion:\s*this\.manifest\.version\b/.test(descriptor[1]))
-			throw new Error('dockletDescriptor.version must derive from this.manifest.version.');
 	}
-	if (!found) throw new Error('No dockletDescriptor contract found in the plugin entry source.');
+	if (!found) throw new Error('No schema-v2 API pluginVersion contract found in the plugin entry source.');
 }
 
 async function setVersion(version) {

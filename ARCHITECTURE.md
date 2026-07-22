@@ -12,4 +12,4 @@ Each `WordViewerView` owns one `WordViewerBridge`. Mount creates a sandboxed opa
 
 ## Compatibility and release
 
-View type/state, commands, settings, schema-v1 `plugin.api`, DOCX model behavior, optional conversion semantics, and released hooks are compatibility boundaries. Production output is a single self-contained `main.js` plus CSS and metadata.
+View type/state, commands, settings, schema-v2 `plugin.api`, DOCX model behavior, and optional conversion semantics are compatibility boundaries. Production output is a single self-contained `main.js` plus CSS and metadata.

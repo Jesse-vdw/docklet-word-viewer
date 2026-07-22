@@ -1,13 +1,13 @@
 import { PluginSettingTab, Setting, type App, type Plugin, type TextComponent, type ToggleComponent } from 'obsidian';
 import type { Signal } from '@preact/signals-core';
-import { canUseRemoteConversion } from '../conversion/SyncfusionConversionClient.ts';
+import { canUseRemoteConversion } from '../adapters/conversion/SyncfusionConversionClient.ts';
 import {
 	DEFAULT_SYNCFUSION_SERVICE_URL,
 	MAX_LOCAL_FILE_SIZE_MB,
 	MAX_REMOTE_CONVERSION_TIMEOUT_MS,
 	MIN_LOCAL_FILE_SIZE_MB,
 	MIN_REMOTE_CONVERSION_TIMEOUT_MS,
-} from '../constants.ts';
+} from '../domain/constants.ts';
 import { normalizeWordViewerSettings, type WordViewerSettings } from './settings.ts';
 
 export interface WordViewerSettingsHost {

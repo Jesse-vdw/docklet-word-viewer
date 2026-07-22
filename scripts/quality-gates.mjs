@@ -34,12 +34,10 @@ async function checkDocs() {
 async function checkCss() {
 	const prefix = prefixById[packageJson.name];
 	if (!prefix) throw new Error(`No CSS prefix registered for ${packageJson.name}`);
-	const cssFiles = (await walk(root, new Set(['.git', 'node_modules', 'dist', 'coverage', 'release']))).filter(
-		(file) => extname(file).toLowerCase() === '.css',
-	);
+	const cssFiles = (await walk(join(root, 'src'), new Set())).filter((file) => extname(file).toLowerCase() === '.css');
 	if (!cssFiles.length) throw new Error('No source CSS files found.');
 	const css = (await Promise.all(cssFiles.map((file) => readFile(file, 'utf8')))).join('\n');
-	const cleanCss = css.replace(/\/\*[\s\S]*?\*\//g, '');
+	const cleanCss = css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/@import[^;]+;/g, '');
 	if (/#[0-9a-f]{3,8}\b/i.test(css))
 		throw new Error('Hardcoded hexadecimal colors are forbidden; use Obsidian semantic variables.');
 	if (/#[-_a-z][\w-]*/i.test(cleanCss)) throw new Error('ID selectors are forbidden.');
@@ -79,13 +77,7 @@ async function checkCss() {
 	const packageAllowed = hostClasses[packageJson.name] ?? new Set();
 	const invalid = [
 		...new Set(
-			classes.filter(
-				(name) =>
-					!name.startsWith(prefix) &&
-					!commonAllowed.test(name) &&
-					!packageAllowed.has(name) &&
-					!(packageJson.name === 'docklet-excalidraw' && name.startsWith('dex-')),
-			),
+			classes.filter((name) => !name.startsWith(prefix) && !commonAllowed.test(name) && !packageAllowed.has(name)),
 		),
 	];
 	if (invalid.length) throw new Error(`Unscoped CSS classes: ${invalid.join(', ')}`);

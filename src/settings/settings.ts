@@ -5,8 +5,8 @@ import {
 	MAX_REMOTE_CONVERSION_TIMEOUT_MS,
 	MIN_LOCAL_FILE_SIZE_MB,
 	MIN_REMOTE_CONVERSION_TIMEOUT_MS,
-} from '../constants.ts';
-import type { WordLayoutMode } from '../docx/wordModel.ts';
+} from '../domain/constants.ts';
+import type { WordLayoutMode } from '../services/docx/wordModel.ts';
 
 export interface WordViewerSettings {
 	defaultLayout: WordLayoutMode;

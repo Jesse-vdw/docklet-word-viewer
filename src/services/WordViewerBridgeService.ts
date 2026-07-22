@@ -1,5 +1,5 @@
-import type { WordDocumentModel, WordLayoutMode } from '../docx/wordModel.ts';
-import { WordViewerBridge } from '../bridge/WordViewerBridge.ts';
+import type { WordDocumentModel, WordLayoutMode } from './docx/wordModel.ts';
+import { WordViewerBridge } from '../adapters/bridge/WordViewerBridge.ts';
 
 interface BridgeHooks {
 	onError(message: string): void;

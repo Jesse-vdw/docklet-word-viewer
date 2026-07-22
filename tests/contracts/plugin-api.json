@@ -1,7 +1,7 @@
 {
 	"pluginId": "docklet-word-viewer",
-	"schemaVersion": 1,
-	"revision": 1,
-	"requiredMembers": ["openDocument"],
+	"schemaVersion": 2,
+	"revision": 2,
+	"requiredMembers": ["schemaVersion", "pluginId", "pluginName", "pluginVersion", "capabilities", "openDocument"],
 	"optionalMembers": []
 }
